@@ -89,7 +89,7 @@ If the site ran Dynamic Blacklist Updater, the Overview shows a cleanup card. It
 
 ## Install
 
-1. Download `unified-blocklist-<version>.zip` from the [latest release](https://github.com/ClearanceClarence/unified-blocklist/releases).
+1. Download `unified-blocklist-<version>.zip` from the [latest release](https://github.com/ClearanceClarence/Unified-Blocklist/releases).
 2. In wp-admin, go to Plugins › Add New › Upload Plugin and upload the zip.
 3. Activate it. The first download of the default list starts when you open **Settings › Unified Blocklist**, or on the next scheduled task.
 
