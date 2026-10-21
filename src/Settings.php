@@ -34,7 +34,7 @@ final class Settings {
 	 */
 	public static function defaults() {
 		return array(
-			'sources'        => array( UNIFIED_BLOCKLIST_DEFAULT_SOURCE ),
+			'sources'        => array(),
 			'interval'       => 'daily',
 			'shrink_guard'   => true,
 			'local_terms'    => array(),

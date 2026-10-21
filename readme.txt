@@ -8,7 +8,7 @@ Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-One blocklist for comments and forms. Syncs community spam lists, keeps your own terms and exceptions, and logs every match so false positives are easy to fix.
+One blocklist for comments and forms. Syncs community spam lists, keeps your own terms, and logs every match.
 
 == Description ==
 
@@ -23,7 +23,7 @@ Unified Blocklist keeps one list and applies it everywhere:
 
 The list is built from:
 
-* **Remote sources** – any plain-text list, one term per line. The default is the community-maintained [WordPress Comment Blacklist](https://github.com/splorp/wordpress-comment-blacklist). Each source keeps its last good copy, so a failed download, an HTML error page or a list that suddenly shrinks never empties your protection.
+* **Remote sources** – any plain-text list, one term per line. The plugin ships with no source configured; one click adds the community-maintained [WordPress Comment Blacklist](https://github.com/splorp/wordpress-comment-blacklist). Each source keeps its last good copy, so a failed download, an HTML error page or a list that suddenly shrinks never empties your protection.
 * **Your terms** – kept across syncs.
 * **Your Discussion settings** – optionally, so the terms you already maintain cover forms too.
 * **Exceptions** – terms you never want to block, one click away from any log entry.
@@ -51,14 +51,20 @@ The compiled list is stored once, is never autoloaded, and is only read when som
 
 If the site ran Dynamic Blacklist Updater, the Overview tab shows a cleanup card. It can deactivate the old plugin, import its custom terms, empty the very large copies it wrote into your Discussion settings, switch off "Comment must be manually approved" if the old plugin turned it on by mistake, and remove its leftover settings.
 
+= External services =
+
+The plugin downloads blocklists from the URLs an administrator adds under Settings › Unified Blocklist › Sources, on the schedule chosen there. Nothing is downloaded until a source is added, and the plugin ships with none. The only data sent is a request for that file with a generic `UnifiedBlocklist/<version>` user agent; nothing about your site, its users or its content is transmitted.
+
+The list the plugin suggests is the WordPress Comment Blacklist maintained by Grant Hutchinson, served from GitHub: https://github.com/splorp/wordpress-comment-blacklist (list and license: https://github.com/splorp/wordpress-comment-blacklist/blob/master/LICENSE). Adding it is a choice you make on the Sources page.
+
 = Privacy =
 
-The plugin contacts only the list URLs you configure, sending no information about your site beyond a generic user agent. The log never stores IP addresses. Excerpts can be turned off.
+The log never stores IP addresses. Excerpts can be turned off. Logged-in users who can moderate comments are never checked and never logged.
 
 == Installation ==
 
 1. Install and activate the plugin.
-2. Go to **Settings > Unified Blocklist**. The first sync runs on the next scheduled run, or click **Sync now**.
+2. Go to **Settings > Unified Blocklist**. Click **Add the community list**, or enter your own list URLs and terms.
 3. Optional: switch to **Monitor only** for a week, review the log, then switch back to **Enforce**.
 
 == Frequently Asked Questions ==

@@ -288,14 +288,13 @@ final class TermList {
 	 * @return string
 	 */
 	public static function source_label( $url ) {
-		$host = (string) wp_parse_url( $url, PHP_URL_HOST );
-		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
-		if ( 'raw.githubusercontent.com' === $host ) {
-			// owner/repo is the useful part of a raw GitHub URL.
-			$parts = array_values( array_filter( explode( '/', $path ) ) );
-			return isset( $parts[1] ) ? $parts[0] . '/' . $parts[1] : $host;
+		$host  = (string) wp_parse_url( $url, PHP_URL_HOST );
+		$parts = array_values( array_filter( explode( '/', (string) wp_parse_url( $url, PHP_URL_PATH ) ) ) );
+		// For code-hosting style URLs (host/owner/repo/...), owner/repo is the useful part.
+		if ( count( $parts ) >= 3 && 0 === strpos( $host, 'raw.' ) ) {
+			return $parts[0] . '/' . $parts[1];
 		}
-		return $host . $path;
+		return $host . ( $parts ? '/' . implode( '/', $parts ) : '' );
 	}
 
 	/**

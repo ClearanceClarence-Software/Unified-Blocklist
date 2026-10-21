@@ -22,10 +22,6 @@ define( 'UNIFIED_BLOCKLIST_FILE', __FILE__ );
 define( 'UNIFIED_BLOCKLIST_DIR', plugin_dir_path( __FILE__ ) );
 define( 'UNIFIED_BLOCKLIST_URL', plugin_dir_url( __FILE__ ) );
 
-if ( ! defined( 'UNIFIED_BLOCKLIST_DEFAULT_SOURCE' ) ) {
-	define( 'UNIFIED_BLOCKLIST_DEFAULT_SOURCE', 'https://raw.githubusercontent.com/splorp/wordpress-comment-blacklist/master/blacklist.txt' );
-}
-
 spl_autoload_register(
 	static function ( $class_name ) {
 		$prefix = 'ClearanceClarence\\UnifiedBlocklist\\';

@@ -12,6 +12,7 @@ import {
 	Section,
 } from '../components/ui';
 import { ago, num } from '../lib/format';
+import { COMMUNITY_LIST } from '../lib/community';
 import { useStore } from '../store';
 import type { Context } from '../types';
 
@@ -100,6 +101,44 @@ export default function Overview() {
 						) }
 					</Callout>
 				) }
+
+				{ state.sources.length === 0 &&
+					state.terms.count === 0 &&
+					! state.sourcesLocked && (
+						<Callout
+							tone="info"
+							icon="globe"
+							action={
+								<button
+									type="button"
+									className="ub-btn ub-btn--primary ub-btn--md"
+									onClick={ () =>
+										update( {
+											sources: [ COMMUNITY_LIST.url ],
+										} )
+									}
+								>
+									<Icon name="download" size={ 15 } />
+									{ __(
+										'Add the community list',
+										'unified-blocklist'
+									) }
+								</button>
+							}
+						>
+							<strong>
+								{ __(
+									'Nothing to block yet.',
+									'unified-blocklist'
+								) }
+							</strong>{ ' ' }
+							{ COMMUNITY_LIST.describe() }{ ' ' }
+							{ __(
+								'You can also add your own terms or list URLs.',
+								'unified-blocklist'
+							) }
+						</Callout>
+					) }
 
 				{ ! state.sync.last && state.sources.length > 0 && (
 					<Callout
