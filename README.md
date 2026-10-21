@@ -1,86 +1,220 @@
-# Unified Blocklist
+<p align="center">
+  <img src=".wordpress-org/banner-1544x500.png" alt="Unified Blocklist: one blocklist for comments and forms" width="772">
+</p>
 
-One blocklist for WordPress comments and forms. Syncs community spam lists, keeps your own terms and exceptions, and logs every match so false positives are easy to find and fix.
+Unified Blocklist is a WordPress plugin that keeps one list of blocked terms and applies it to comments and to the form plugins people actually use: Contact Form 7, Gravity Forms, WPForms and Formidable Forms. The list is built from community spam lists that update on a schedule, your own terms, and the terms you already keep in Settings › Discussion. Every match is logged with the text around it, and a term that catches something legitimate is one click away from being allowed.
 
-**Requires:** WordPress 6.4+, PHP 7.4+ · **Tested with:** WordPress 7.1, Contact Form 7 6.2, Formidable Forms 7.0 · **License:** GPL-2.0-or-later
+It is built for sites that get the same spam phrases in the contact form as in the comments, and for agencies that want to maintain one list for many sites instead of pasting into Discussion settings on each of them.
 
-## Why
+Requires WordPress 6.4+ and PHP 7.4+. Free and GPL. It talks to no server other than the list URLs you configure.
 
-WordPress's built-in "Disallowed Comment Keys" only covers comments and has to be maintained by hand. If you paste a 66,000-term community list into it:
+<p align="center">
+  <img src=".wordpress-org/screenshot-1.png" alt="The Overview: what is protected, matches per day, and the most matched terms" width="900">
+</p>
 
-- about 0.9 MB is added to autoloaded options, so every page load carries it,
-- every comment takes about 0.9 s to check, because core runs one regex per term per field,
-- matches go straight to Trash, and nothing records why.
+## Why not just use the Discussion settings?
 
-With the same list, Unified Blocklist adds nothing to autoload, checks a comment in about 6 ms, and logs every match.
+WordPress has a built-in list of disallowed words, and it is a fine place for a dozen of them. It stops being fine when you paste in a community list of 66,000 terms:
 
-## What it covers
+- **It only covers comments.** The form plugins each have their own filters, their own settings pages, and in some cases nothing at all.
+- **It is slow.** Core runs one regular expression per term, per field, per comment. With 66,000 terms, that is about 0.9 seconds of CPU for every comment. Unified Blocklist checks the same list in about 6 ms.
+- **It is loaded on every page view.** The option is autoloaded, so every request to the site carries almost a megabyte it never uses.
+- **You never see what it caught.** Matches go straight to Trash, nothing records which term fired, and a word like *billig* ("cheap" in Norwegian) can silently eat real messages for months.
+
+Unified Blocklist keeps its list out of the autoloaded options, checks it with plain string searches on a single normalized copy of the submission, and writes every match to a log you can search.
+
+## What it does
+
+### One list, five places
 
 | Where | What happens on a match |
 | --- | --- |
-| Comments | Spam (default), held for moderation, or Trash |
-| Contact Form 7 | CF7's own spam path: spam message shown, no email sent |
-| Gravity Forms | Entry saved under Entries > Spam with a note |
-| WPForms | Rejected with your message, nothing saved |
-| Formidable Forms | Rejected with your message, nothing saved |
+| **Comments** | Sent to Spam (recoverable, and it trains Akismet), held for moderation, or trashed. Your choice. |
+| **Contact Form 7** | Goes through CF7's own spam path: the visitor sees CF7's spam message, no email is sent, and Flamingo keeps it in its spam folder. |
+| **Gravity Forms** | The entry is saved under Entries › Spam with a note naming the term. The visitor sees the normal confirmation. |
+| **WPForms** | The submission is rejected with your message. Nothing is saved or sent. |
+| **Formidable Forms** | The submission is rejected with your message, after Formidable's own validation and spam checks. |
 
-## Features
+Each integration uses the plugin's native spam mechanism rather than bolting on a generic error, so they behave the way site owners already expect those plugins to behave.
 
-- **Sources:** any number of plain-text lists, one term per line. Each keeps its last good copy, and conditional requests (ETag / Last-Modified) avoid re-downloading unchanged lists.
-- **Safe syncing:** HTTP errors, HTML error pages, empty lists and lists that suddenly shrink by more than half are rejected. Requests go through `wp_safe_remote_get()`, so local and private addresses are refused.
-- **Your terms and exceptions**, plus the option to include the core Discussion list so it applies to forms too.
-- **Matching:** substring (compatible with community lists) or whole-word. Ignores case, HTML entities and zero-width characters.
-- **Log** with field, term and excerpt. An **Allow** button on every entry adds the term to exceptions.
-- **Monitor only** mode for a dry run on a live site.
-- **Test** tab and `wp unified-blocklist test` to check any text.
-- **Dashboard widget:** matches for the last 7 and 30 days, a per-day chart, the most matched terms, and any issue that needs attention (empty list, failing source, Monitor only).
-- **Cleanup** for sites that ran Dynamic Blacklist Updater.
+### Sources that keep working
 
-## For agencies
+Sources are plain-text lists, one term per line, downloaded on a schedule you pick (hourly to weekly). The default is the community-maintained [WordPress Comment Blacklist](https://github.com/splorp/wordpress-comment-blacklist). Add as many as you like.
+
+Downloads are careful about what they accept:
+
+- Unchanged lists are not downloaded again (ETag and Last-Modified).
+- HTTP errors, HTML error pages served as text, and empty responses are rejected.
+- A list that suddenly shrinks by more than half is held back until you accept it, so a broken upstream file cannot empty your protection.
+- Every source keeps its last good copy. One failing source never affects the others.
+- Requests go through `wp_safe_remote_get()`, so local and private addresses are refused.
+- Lists are stored compressed and in chunks that stay under MySQL's default `max_allowed_packet`, and every save is read back and verified. If the database refuses a list, you see the database's own error instead of a green checkmark.
+
+### Built to avoid false positives
+
+<p align="center">
+  <img src=".wordpress-org/screenshot-2.png" alt="The Activity log: every match with the field, the term and an excerpt, and an Allow button on each row" width="900">
+</p>
+
+- **Activity log.** Every match with where it happened, which field, which term, and a short excerpt with the term highlighted. Search it, filter by place or result, and click **Allow** on any row. The toast has an Undo.
+- **Monitor only.** Log matches without blocking anything. Run it for a week on a busy site, read the log, build your exceptions, then switch to Enforce.
+- **Whole-word matching** as an option, so "cash" no longer matches "cashew". Community lists are written for substring matching, which stays the default.
+- **Minimum term length.** Two-character entries from downloaded lists cause most accidental matches, so terms shorter than three characters are skipped by default. Your own terms are always used.
+- **Trusted users are skipped.** Anyone logged in who can moderate comments is never checked.
+- **Matching ignores tricks.** Case, HTML entities, zero-width characters and soft hyphens are normalized away before matching, so `vi&#8203;agra` matches `viagra`.
+
+### A tester that explains itself
+
+<p align="center">
+  <img src=".wordpress-org/screenshot-3.png" alt="Test a message: the verdict, the matched terms highlighted, and where each term comes from" width="900">
+</p>
+
+Paste a comment or form message and it is checked as you type, with your current settings. You get the verdict, the matching terms highlighted in the text, and which list each term comes from. When something *passes* that you expected to be stopped, it says why: the term is shorter than your minimum, it is in your exceptions, whole-word matching is on, or the list only has longer phrases that contain it. Each reason comes with a one-click fix.
+
+### Dashboard widget
+
+A small card on the WordPress Dashboard: matches for the last 7 and 30 days, a per-day chart, the most matched terms, and anything that needs attention (an empty list, a failing source, Monitor only still on). Rendered by PHP, no JavaScript, so it costs the Dashboard nothing.
+
+### Protection settings
+
+<p align="center">
+  <img src=".wordpress-org/screenshot-4.png" alt="Protection: Enforce or Monitor only, what happens to matching comments, and which form plugins are covered" width="900">
+</p>
+
+Everything saves as you change it. The top bar shows the current mode, and a failed save puts the old value back so the screen never shows something that is not stored.
+
+### Moving from Dynamic Blacklist Updater
+
+If the site ran Dynamic Blacklist Updater, the Overview shows a cleanup card. It can deactivate the old plugin, import its custom terms, empty the very large copies it wrote into Settings › Discussion, switch off "Comment must be manually approved" if the old plugin turned it on by mistake, and remove its leftover settings and scheduled task. Each step is a checkbox.
+
+## Install
+
+1. Download `unified-blocklist-<version>.zip` from the [latest release](https://github.com/ClearanceClarence/unified-blocklist/releases).
+2. In wp-admin, go to Plugins › Add New › Upload Plugin and upload the zip.
+3. Activate it. The first download of the default list starts when you open **Settings › Unified Blocklist**, or on the next scheduled task.
+
+That is it for most sites. If you want to be careful on a busy site, open **Protection**, pick **Monitor only**, and come back to the **Activity** log in a few days.
+
+## Settings reference
+
+All settings live in **Settings › Unified Blocklist**.
+
+| Page | Setting | What it does | Default |
+| --- | --- | --- | --- |
+| Sources | List URLs | Plain-text lists, one URL per line. Saving downloads new lists right away. | splorp's list |
+| Sources | Check for updates | Hourly, twice a day, daily or weekly. | Daily |
+| Sources | Hold back lists that shrink | Keep the previous copy if a list loses more than half its terms. | On |
+| Terms | Your terms | Added to the downloaded lists, one per line. Kept across syncs. | Empty |
+| Terms | Exceptions | Never blocked, whichever list they come from. The Allow buttons add to this. | Empty |
+| Terms | Match terms | Anywhere in the text, or whole words only. | Anywhere |
+| Terms | Shortest downloaded term | Downloaded terms shorter than this are skipped. | 3 characters |
+| Terms | Include the Discussion list | Use the terms in Settings › Discussion › Disallowed Comment Keys for forms too. | On |
+| Protection | Mode | Enforce, or Monitor only. | Enforce |
+| Protection | When a comment matches | Spam, Hold, Trash, or Off. | Spam |
+| Protection | Forms | Switch each form integration on or off. | All on |
+| Protection | Rejection message | Shown by WPForms and Formidable. It never says which term matched. | A generic message |
+| Protection | Skip trusted users | Never check logged-in users who can moderate comments. | On |
+| Protection | Keep log entries for | 7 to 365 days. | 30 days |
+| Protection | Store an excerpt with each match | Turn off if submissions may contain personal data you do not want kept. | On |
+
+The light or dark theme is a per-user preference, like in Restbench.
+
+## For agencies and developers
+
+### wp-config.php
+
+Define the sources in code to manage them centrally. The Sources page then shows them read-only.
 
 ```php
-// wp-config.php: manage sources centrally. The field becomes read-only in the admin.
 define( 'UNIFIED_BLOCKLIST_SOURCES', array(
 	'https://raw.githubusercontent.com/splorp/wordpress-comment-blacklist/master/blacklist.txt',
-	'https://example.com/agency-list.txt',
+	'https://lists.example-agency.no/wordpress-spam.txt',
 ) );
 ```
 
+### WP-CLI
+
 ```bash
-wp unified-blocklist sync [--accept-smaller]
-wp unified-blocklist status
-wp unified-blocklist test "text to check"
-wp unified-blocklist rebuild
+wp unified-blocklist sync                    # download all sources and rebuild
+wp unified-blocklist sync --accept-smaller   # also accept lists that shrank
+wp unified-blocklist status                  # mode, counts, next sync, per-source state
+wp unified-blocklist test "Buy cheap watches here"
+wp unified-blocklist rebuild                 # rebuild from stored copies, no download
 ```
+
+`test` exits with status 1 when something matches, so it works in scripts.
+
+### REST API
+
+The admin screen talks to `/wp-json/unified-blocklist/v1/`, and so can you, authenticated as a user with `manage_options`:
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| GET | `/state` | Counts, source health, activity summary, per-day matches |
+| GET, POST | `/settings` | Read, or save a partial settings object |
+| POST | `/sync` | Sync now (`acceptSmaller: true` to override the shrink guard) |
+| GET, DELETE | `/log` | Page through the log (`page`, `perPage`, `context`, `outcome`, `search`), or clear it |
+| POST, DELETE | `/exceptions` | Add or remove an exception (`term`) |
+| POST | `/test` | Check text (`text`) without logging anything |
+| POST | `/legacy` | Run the Dynamic Blacklist Updater cleanup (`steps`) |
 
 ### Hooks
 
-| Hook | Type | Purpose |
-| --- | --- | --- |
-| `unified_blocklist_settings` | filter | Override any setting from code |
-| `unified_blocklist_terms` | filter | Final normalized term list |
-| `unified_blocklist_fields` | filter | Fields checked for one submission (`$fields, $context`) |
-| `unified_blocklist_enforce` | filter | Overrule a match (`$enforce, $hit, $context, $fields`) |
-| `unified_blocklist_matched` | action | Fires on every match (`$hit, $context, $enforce`) |
+```php
+// Override any setting from code.
+add_filter( 'unified_blocklist_settings', function ( $settings ) {
+	$settings['mode'] = 'enforce';
+	return $settings;
+} );
 
-## Storage
+// Change the final, normalized term list.
+add_filter( 'unified_blocklist_terms', function ( $terms ) {
+	return array_diff( $terms, array( 'free' ) );
+} );
+
+// Decide which fields are checked for one submission.
+add_filter( 'unified_blocklist_fields', function ( $fields, $context ) {
+	if ( 'comment' === $context ) {
+		unset( $fields['Website'] );
+	}
+	return $fields;
+}, 10, 2 );
+
+// Overrule a match, for example to allow one form entirely.
+add_filter( 'unified_blocklist_enforce', function ( $enforce, $hit, $context, $fields ) {
+	return 'wpforms' === $context ? false : $enforce;
+}, 10, 4 );
+
+// Do something on every match. $enforce says whether the integration will act on it.
+add_action( 'unified_blocklist_matched', function ( $hit, $context, $enforce ) {
+	error_log( "Blocklist: {$hit->term} in {$context} ({$hit->field})" );
+}, 10, 3 );
+```
+
+## How it is stored
 
 | Data | Where | Autoloaded |
 | --- | --- | --- |
-| Settings | `unified_blocklist_settings` (about 0.5 KB) | yes |
-| Per-source copies | `unified_blocklist_src_*` | no |
-| Compiled list | `unified_blocklist_compiled` | no (object-cached) |
+| Settings | `unified_blocklist_settings`, about 0.5 KB | Yes |
+| Per-source copies | `unified_blocklist_src_*`, compressed, chunked | No |
+| Compiled list | `unified_blocklist_compiled_terms`, compressed, chunked | No |
 | Log | `{prefix}unified_blocklist_log` table | — |
 
-Uninstalling removes all of it. IP addresses are never logged, and excerpts can be turned off.
+The compiled list is read only when something needs matching: a comment or a form submission, the tester, or the download button. A 66,000-term list takes about 10 ms to load and about 6 ms to check. Uninstalling removes all of it, including the log table and the per-user theme preference.
+
+## Privacy
+
+The plugin contacts only the list URLs you configure, and sends nothing about your site beyond a generic `UnifiedBlocklist/<version>` user agent. The log stores the term, the field name and a short excerpt around the match; it never stores IP addresses, and excerpts can be turned off. Trusted users are never checked and never logged.
 
 ## A note on community lists
 
-The default source is [splorp/wordpress-comment-blacklist](https://github.com/splorp/wordpress-comment-blacklist). It is English-centric and matches substrings, so for example it contains the Norwegian word *billig* ("cheap") and common praise phrases such as "the great article". On non-English sites, start in **Monitor only** mode and use the log to build your exceptions.
+The default list is English-centric and matches substrings. It contains words that are ordinary in other languages, such as the Norwegian *billig*, and ordinary English phrases such as "the great article". On a non-English site, or any site with real traffic, start in **Monitor only**, read the log for a week, and use the Allow buttons. The exceptions you build are kept across syncs.
+
+Keyword lists catch known spam phrases and domains. They do not catch everything, and they are not a replacement for a behavioral filter such as Akismet or Antispam Bee, or a challenge such as a honeypot or Turnstile. Use them together.
 
 ## Development
 
-The admin screen is a React app built with `@wordpress/scripts`, the same setup and design system as [Restbench](https://github.com/ClearanceClarence/restbench). The PHP engine in `src/` works without it; the app only talks to the REST API under `/wp-json/unified-blocklist/v1`.
+The admin screen is a React app built with `@wordpress/scripts`, the same setup and design system as [Restbench](https://github.com/ClearanceClarence/restbench). The PHP engine in `src/` works without it; the app only talks to the REST API.
 
 ```bash
 npm install
@@ -90,11 +224,24 @@ npm run lint:js
 npm run zip        # build + dist/unified-blocklist-<version>.zip
 ```
 
+PHP follows the WordPress Coding Standards; `phpcs.xml.dist` is included.
+
 | Folder | What's in it |
 | --- | --- |
-| `src/` | PHP: engine, integrations, REST API, admin mount |
+| `src/` | PHP: engine, integrations, REST API, admin mount, dashboard widget |
 | `app/` | React admin (TypeScript + SCSS) |
-| `build/` | Compiled app (generated, not committed) |
+| `build/` | Compiled app, unminified so it can be read as it is (generated, not committed) |
 | `licenses/` | Font licenses (Atkinson Hyperlegible, OFL) |
+| `.wordpress-org/` | Icon, banners and screenshots for the plugin directory |
 
-The admin theme (light or dark) is a per-user preference, like in Restbench.
+The GitHub workflow typechecks, lints, builds, and attaches the plugin zip to every push.
+
+## Credits
+
+Unified Blocklist bundles the Atkinson Hyperlegible Next and Atkinson Hyperlegible Mono fonts (Copyright 2020–2024 The Atkinson Hyperlegible Next / Mono Project Authors), licensed under the SIL Open Font License 1.1. The license text is in `licenses/`. The fonts are served from the plugin folder, not from Google.
+
+The default list is the community-maintained [WordPress Comment Blacklist](https://github.com/splorp/wordpress-comment-blacklist) by Grant Hutchinson.
+
+## License
+
+GPL-2.0-or-later. See [LICENSE](LICENSE).
