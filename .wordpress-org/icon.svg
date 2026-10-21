@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <title>Unified Blocklist</title>
+  <rect width="256" height="256" fill="#16181b"/>
+  <g transform="translate(40 40) scale(3.6667)">
+    <path d="M24 4 41 10v13c0 10.2-7 18.2-17 21-10-2.8-17-10.8-17-21V10L24 4Z" fill="#c3ec6a"/>
+    <rect x="14" y="17" width="20" height="3.5" rx="1.75" fill="#16181b"/>
+    <rect x="17.5" y="24" width="13" height="3.5" rx="1.75" fill="#16181b" opacity="0.85"/>
+    <rect x="21" y="31" width="6" height="3.5" rx="1.75" fill="#16181b" opacity="0.7"/>
+  </g>
+</svg>

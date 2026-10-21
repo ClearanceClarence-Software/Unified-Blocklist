@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint:js
+      - run: npm run zip
+      - name: PHP syntax check
+        run: for f in unified-blocklist.php uninstall.php $(find src -name '*.php'); do php -l "$f"; done
+      - uses: actions/upload-artifact@v7
+        with:
+          name: unified-blocklist-plugin
+          path: dist/*.zip
