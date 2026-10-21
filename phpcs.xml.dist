@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<ruleset name="Unified Blocklist">
+	<description>WordPress Coding Standards, including the escaping, sanitizing and nonce checks.</description>
+
+	<file>unified-blocklist.php</file>
+	<file>uninstall.php</file>
+	<file>src</file>
+
+	<arg name="extensions" value="php"/>
+	<arg value="sp"/>
+
+	<rule ref="WordPress">
+		<!-- Classes are autoloaded from src/ by namespace, so file names follow the class names. -->
+		<exclude name="WordPress.Files.FileName"/>
+		<!-- WP-CLI and hook callbacks receive arguments they do not always use. -->
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter"/>
+	</rule>
+
+	<config name="minimum_wp_version" value="6.4"/>
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="unified-blocklist"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>
