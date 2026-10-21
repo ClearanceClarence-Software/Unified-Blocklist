@@ -39,7 +39,7 @@ Each integration uses the plugin's native spam mechanism rather than bolting on 
 
 ### Sources that keep working
 
-Sources are plain-text lists, one term per line, downloaded on a schedule you pick (hourly to weekly). The default is the community-maintained [WordPress Comment Blacklist](https://github.com/splorp/wordpress-comment-blacklist). Add as many as you like.
+Sources are plain-text lists, one term per line, downloaded on a schedule you pick (hourly to weekly). The plugin ships with no source configured, so nothing is downloaded until you decide. One click on the Sources page adds the community-maintained [WordPress Comment Blacklist](https://github.com/splorp/wordpress-comment-blacklist); add as many others as you like.
 
 Downloads are careful about what they accept:
 
@@ -91,7 +91,7 @@ If the site ran Dynamic Blacklist Updater, the Overview shows a cleanup card. It
 
 1. Download `unified-blocklist-<version>.zip` from the [latest release](https://github.com/ClearanceClarence/Unified-Blocklist/releases).
 2. In wp-admin, go to Plugins › Add New › Upload Plugin and upload the zip.
-3. Activate it. The first download of the default list starts when you open **Settings › Unified Blocklist**, or on the next scheduled task.
+3. Activate it, open **Settings › Unified Blocklist**, and click **Add the community list** (or enter your own list URLs and terms). The download starts right away.
 
 That is it for most sites. If you want to be careful on a busy site, open **Protection**, pick **Monitor only**, and come back to the **Activity** log in a few days.
 
@@ -101,7 +101,7 @@ All settings live in **Settings › Unified Blocklist**.
 
 | Page | Setting | What it does | Default |
 | --- | --- | --- | --- |
-| Sources | List URLs | Plain-text lists, one URL per line. Saving downloads new lists right away. | splorp's list |
+| Sources | List URLs | Plain-text lists, one URL per line. Saving downloads new lists right away. | Empty |
 | Sources | Check for updates | Hourly, twice a day, daily or weekly. | Daily |
 | Sources | Hold back lists that shrink | Keep the previous copy if a list loses more than half its terms. | On |
 | Terms | Your terms | Added to the downloaded lists, one per line. Kept across syncs. | Empty |
@@ -204,11 +204,11 @@ The compiled list is read only when something needs matching: a comment or a for
 
 ## Privacy
 
-The plugin contacts only the list URLs you configure, and sends nothing about your site beyond a generic `UnifiedBlocklist/<version>` user agent. The log stores the term, the field name and a short excerpt around the match; it never stores IP addresses, and excerpts can be turned off. Trusted users are never checked and never logged.
+The plugin contacts only the list URLs you add, and ships with none. It sends nothing about your site beyond a generic `UnifiedBlocklist/<version>` user agent. The log stores the term, the field name and a short excerpt around the match; it never stores IP addresses, and excerpts can be turned off. Trusted users are never checked and never logged.
 
 ## A note on community lists
 
-The default list is English-centric and matches substrings. It contains words that are ordinary in other languages, such as the Norwegian *billig*, and ordinary English phrases such as "the great article". On a non-English site, or any site with real traffic, start in **Monitor only**, read the log for a week, and use the Allow buttons. The exceptions you build are kept across syncs.
+The suggested community list is English-centric and matches substrings. It contains words that are ordinary in other languages, such as the Norwegian *billig*, and ordinary English phrases such as "the great article". On a non-English site, or any site with real traffic, start in **Monitor only**, read the log for a week, and use the Allow buttons. The exceptions you build are kept across syncs.
 
 Keyword lists catch known spam phrases and domains. They do not catch everything, and they are not a replacement for a behavioral filter such as Akismet or Antispam Bee, or a challenge such as a honeypot or Turnstile. Use them together.
 

@@ -14,6 +14,7 @@ import {
 	Toggle,
 } from '../components/ui';
 import { ago, num } from '../lib/format';
+import { COMMUNITY_LIST } from '../lib/community';
 import { useStore } from '../store';
 import type { SourceState } from '../types';
 
@@ -29,6 +30,9 @@ function tone( s: SourceState ): 'ok' | 'warn' | 'err' | 'muted' {
 
 export default function Sources() {
 	const { state, settings, update, sync, syncing } = useStore();
+	const hasCommunity = settings.sources.includes( COMMUNITY_LIST.url );
+	const addCommunity = () =>
+		update( { sources: [ ...settings.sources, COMMUNITY_LIST.url ] } );
 
 	return (
 		<div className="ub-page">
@@ -57,12 +61,38 @@ export default function Sources() {
 				<div className="ub-card">
 					<Empty
 						icon="globe"
-						title={ __( 'No sources.', 'unified-blocklist' ) }
+						title={ __( 'No sources yet.', 'unified-blocklist' ) }
 					>
-						{ __(
-							'Only your own terms and the Discussion list are used.',
-							'unified-blocklist'
-						) }
+						<p>
+							{ __(
+								'Only your own terms and the Discussion list are used. Add a list to download, or start with the community list:',
+								'unified-blocklist'
+							) }
+						</p>
+						<p className="ub-community">
+							<strong>{ COMMUNITY_LIST.name }</strong>
+							<br />
+							{ COMMUNITY_LIST.describe() }{ ' ' }
+							<a
+								href={ COMMUNITY_LIST.homepage }
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{ __( 'About this list', 'unified-blocklist' ) }
+							</a>
+						</p>
+						<button
+							type="button"
+							className="ub-btn ub-btn--primary ub-btn--md"
+							onClick={ addCommunity }
+							disabled={ state.sourcesLocked }
+						>
+							<Icon name="download" size={ 15 } />
+							{ __(
+								'Add the community list',
+								'unified-blocklist'
+							) }
+						</button>
 					</Empty>
 				</div>
 			) : (
@@ -220,6 +250,21 @@ export default function Sources() {
 							{ __(
 								'One URL per line. Saving downloads new lists right away. Local and private addresses are refused.',
 								'unified-blocklist'
+							) }
+							{ ! hasCommunity && state.sources.length > 0 && (
+								<>
+									{ ' ' }
+									<button
+										type="button"
+										className="ub-link"
+										onClick={ addCommunity }
+									>
+										{ __(
+											'Add the community list',
+											'unified-blocklist'
+										) }
+									</button>
+								</>
 							) }
 						</p>
 					</div>

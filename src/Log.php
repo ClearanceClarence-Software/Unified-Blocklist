@@ -34,11 +34,10 @@ final class Log {
 		global $wpdb;
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		$table   = self::table();
 		$charset = $wpdb->get_charset_collate();
 
 		dbDelta(
-			"CREATE TABLE {$table} (
+			"CREATE TABLE {$wpdb->prefix}unified_blocklist_log (
 				id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 				created_at datetime NOT NULL,
 				context varchar(32) NOT NULL,
@@ -102,7 +101,6 @@ final class Log {
 	 */
 	public static function query( $page = 1, $per_page = 50, $filters = array() ) {
 		global $wpdb;
-		$table   = self::table();
 		$offset  = max( 0, ( (int) $page - 1 ) * (int) $per_page );
 		$filters = is_array( $filters ) ? $filters : array( 'context' => (string) $filters );
 
@@ -115,7 +113,7 @@ final class Log {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table; its name is not user input.
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table}
+				"SELECT COUNT(*) FROM {$wpdb->prefix}unified_blocklist_log
 				WHERE ( %s = '' OR context = %s )
 				AND ( %s = '' OR ( %s = 'logged' AND action = 'logged' ) OR ( %s = 'stopped' AND action <> 'logged' ) )
 				AND ( %s = '' OR term LIKE %s OR excerpt LIKE %s OR field LIKE %s )",
@@ -132,7 +130,7 @@ final class Log {
 		);
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table}
+				"SELECT * FROM {$wpdb->prefix}unified_blocklist_log
 				WHERE ( %s = '' OR context = %s )
 				AND ( %s = '' OR ( %s = 'logged' AND action = 'logged' ) OR ( %s = 'stopped' AND action <> 'logged' ) )
 				AND ( %s = '' OR term LIKE %s OR excerpt LIKE %s OR field LIKE %s )
@@ -167,9 +165,8 @@ final class Log {
 	 */
 	public static function get( $id ) {
 		global $wpdb;
-		$table = self::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table.
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ), ARRAY_A );
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}unified_blocklist_log WHERE id = %d", $id ), ARRAY_A );
 		return is_array( $row ) ? $row : null;
 	}
 
@@ -181,12 +178,11 @@ final class Log {
 	 */
 	public static function summary( $days = 30 ) {
 		global $wpdb;
-		$table = self::table();
 		$since = gmdate( 'Y-m-d H:i:s', time() - (int) $days * DAY_IN_SECONDS );
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table.
-		$by_context = $wpdb->get_results( $wpdb->prepare( "SELECT context, action, COUNT(*) AS hits FROM {$table} WHERE created_at >= %s GROUP BY context, action", $since ), ARRAY_A );
-		$top_terms  = $wpdb->get_results( $wpdb->prepare( "SELECT term, COUNT(*) AS hits, MAX(created_at) AS last_seen FROM {$table} WHERE created_at >= %s GROUP BY term ORDER BY hits DESC LIMIT 10", $since ), ARRAY_A );
+		$by_context = $wpdb->get_results( $wpdb->prepare( "SELECT context, action, COUNT(*) AS hits FROM {$wpdb->prefix}unified_blocklist_log WHERE created_at >= %s GROUP BY context, action", $since ), ARRAY_A );
+		$top_terms  = $wpdb->get_results( $wpdb->prepare( "SELECT term, COUNT(*) AS hits, MAX(created_at) AS last_seen FROM {$wpdb->prefix}unified_blocklist_log WHERE created_at >= %s GROUP BY term ORDER BY hits DESC LIMIT 10", $since ), ARRAY_A );
 		// phpcs:enable
 
 		$total = 0;
@@ -209,12 +205,11 @@ final class Log {
 	 */
 	public static function daily( $days = 30 ) {
 		global $wpdb;
-		$table = self::table();
 		$since = gmdate( 'Y-m-d 00:00:00', time() - ( (int) $days - 1 ) * DAY_IN_SECONDS );
 
 		// SUBSTR works the same on MySQL, MariaDB and SQLite, unlike DATE().
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT SUBSTR(created_at, 1, 10) AS day, SUM(CASE WHEN action = 'logged' THEN 1 ELSE 0 END) AS logged, SUM(CASE WHEN action <> 'logged' THEN 1 ELSE 0 END) AS stopped FROM {$table} WHERE created_at >= %s GROUP BY SUBSTR(created_at, 1, 10)", $since ), ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT SUBSTR(created_at, 1, 10) AS day, SUM(CASE WHEN action = 'logged' THEN 1 ELSE 0 END) AS logged, SUM(CASE WHEN action <> 'logged' THEN 1 ELSE 0 END) AS stopped FROM {$wpdb->prefix}unified_blocklist_log WHERE created_at >= %s GROUP BY SUBSTR(created_at, 1, 10)", $since ), ARRAY_A );
 
 		$by_day = array();
 		foreach ( (array) $rows as $row ) {
@@ -238,10 +233,9 @@ final class Log {
 	 */
 	public static function prune() {
 		global $wpdb;
-		$table = self::table();
-		$days  = (int) Settings::get( 'log_retention' );
+		$days = (int) Settings::get( 'log_retention' );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table.
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE created_at < %s", gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS ) ) );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}unified_blocklist_log WHERE created_at < %s", gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS ) ) );
 	}
 
 	/**
@@ -249,9 +243,8 @@ final class Log {
 	 */
 	public static function clear() {
 		global $wpdb;
-		$table = self::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table.
-		$wpdb->query( "DELETE FROM {$table}" );
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}unified_blocklist_log" );
 	}
 
 	/**
@@ -259,9 +252,8 @@ final class Log {
 	 */
 	public static function drop() {
 		global $wpdb;
-		$table = self::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Uninstall.
-		$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}unified_blocklist_log" );
 		delete_option( self::DB_VERSION_OPTION );
 	}
 }

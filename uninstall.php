@@ -25,9 +25,8 @@ function unified_blocklist_uninstall_site() {
 	wp_clear_scheduled_hook( 'unified_blocklist_sync' );
 	wp_clear_scheduled_hook( 'unified_blocklist_prune' );
 
-	$table = $wpdb->prefix . 'unified_blocklist_log';
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Uninstall.
-	$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Uninstall.
+	$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}unified_blocklist_log" );
 }
 
 if ( is_multisite() ) {

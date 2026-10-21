@@ -1292,6 +1292,15 @@
 	color: var(--ub-text-3);
 }
 
+.ub-community {
+	margin-top: 10px !important;
+	max-width: 52ch;
+}
+
+.ub-empty .ub-btn {
+	margin-top: 14px;
+}
+
 // Settings rows (same as Restbench)
 
 .ub-setting {
