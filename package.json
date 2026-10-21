@@ -5,12 +5,12 @@
   "private": true,
   "license": "GPL-2.0-or-later",
   "author": "ClearanceClarence",
-  "homepage": "https://github.com/ClearanceClarence/unified-blocklist",
+  "homepage": "https://github.com/ClearanceClarence/Unified-Blocklist",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ClearanceClarence/unified-blocklist.git"
+    "url": "https://github.com/ClearanceClarence/Unified-Blocklist.git"
   },
-  "bugs": "https://github.com/ClearanceClarence/unified-blocklist/issues",
+  "bugs": "https://github.com/ClearanceClarence/Unified-Blocklist/issues",
   "scripts": {
     "build": "wp-scripts build app/index.tsx",
     "start": "wp-scripts start app/index.tsx",

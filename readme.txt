@@ -94,7 +94,7 @@ The Sources field then becomes read-only on that site.
 
 The files in build/ are compiled from TypeScript and SCSS but not minified, so you can read them as they are.
 
-The source code and build setup are on GitHub: https://github.com/ClearanceClarence/unified-blocklist
+The source code and build setup are on GitHub: https://github.com/ClearanceClarence/Unified-Blocklist
 
 To build it yourself you need Node 20 or newer:
 
