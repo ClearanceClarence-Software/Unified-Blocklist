@@ -56,21 +56,47 @@ final class Plugin {
 	}
 
 	/**
-	 * Development builds stored each list as one serialized row, which MySQL refuses above
-	 * max_allowed_packet. Convert anything in that format and rebuild once.
+	 * Earlier builds kept the lists in wp_options, first as one serialized row and then as
+	 * compressed chunks. Move anything still there into the lists table, then remove the rows.
 	 */
 	public static function maybe_migrate_storage() {
-		if ( '2' === get_option( 'unified_blocklist_storage_version' ) ) {
+		if ( '3' === get_option( 'unified_blocklist_storage_version' ) ) {
 			return;
 		}
+		Log::maybe_upgrade();
+
+		$keys = array( TermList::TERMS_KEY );
 		foreach ( array_keys( Sources::state() ) as $key ) {
-			$old = get_option( Sources::TERMS_PREFIX . $key, null );
-			if ( is_array( $old ) && ! isset( $old['format'] ) ) {
-				Storage::put( Sources::TERMS_PREFIX . $key, array_values( array_filter( array_map( 'strval', $old ), 'strlen' ) ) );
+			$keys[] = Sources::TERMS_PREFIX . $key;
+		}
+		foreach ( $keys as $key ) {
+			$old = get_option( $key, null );
+			if ( is_array( $old ) && ! isset( $old['format'] ) && TermList::TERMS_KEY !== $key ) {
+				// Format 1: a plain array of terms.
+				Storage::put( $key, array_values( array_filter( array_map( 'strval', $old ), 'strlen' ) ) );
+			} elseif ( is_array( $old ) && isset( $old['format'], $old['chunks'] ) ) {
+				// Format 2: compressed chunks in options.
+				$blob = '';
+				for ( $i = 0; $i < (int) $old['chunks']; $i++ ) {
+					$blob .= (string) get_option( $key . '_c' . $i, '' );
+				}
+				$raw = $blob ? gzuncompress( base64_decode( $blob ) ) : false; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Our own encoding.
+				if ( false !== $raw && '' !== $raw ) {
+					Storage::put( $key, explode( "\n", $raw ) );
+				}
 			}
 		}
+
+		// Remove every list row from wp_options, whichever format it was in.
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- One-time cleanup.
+		$names = $wpdb->get_col( $wpdb->prepare( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like( 'unified_blocklist_src_' ) . '%', $wpdb->esc_like( 'unified_blocklist_compiled_terms' ) . '%' ) );
+		foreach ( (array) $names as $name ) {
+			delete_option( $name );
+		}
+
 		TermList::rebuild();
-		update_option( 'unified_blocklist_storage_version', '2', false );
+		update_option( 'unified_blocklist_storage_version', '3', false );
 	}
 
 	/**

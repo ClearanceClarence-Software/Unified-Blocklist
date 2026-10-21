@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Log {
 
-	const DB_VERSION        = '1';
+	const DB_VERSION        = '2';
 	const DB_VERSION_OPTION = 'unified_blocklist_db_version';
 
 	/**
@@ -28,13 +28,26 @@ final class Log {
 	}
 
 	/**
-	 * Creates or updates the table.
+	 * Creates or updates the plugin's two tables: the log, and the term lists.
 	 */
 	public static function install() {
 		global $wpdb;
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		$charset = $wpdb->get_charset_collate();
+
+		dbDelta(
+			"CREATE TABLE {$wpdb->prefix}unified_blocklist_lists (
+				list_key varchar(64) NOT NULL,
+				chunk_no smallint(5) unsigned NOT NULL DEFAULT 0,
+				total_chunks smallint(5) unsigned NOT NULL DEFAULT 1,
+				term_count int(10) unsigned NOT NULL DEFAULT 0,
+				hash char(32) NOT NULL DEFAULT '',
+				data longtext NOT NULL,
+				updated_at datetime NOT NULL,
+				PRIMARY KEY  (list_key, chunk_no)
+			) {$charset};"
+		);
 
 		dbDelta(
 			"CREATE TABLE {$wpdb->prefix}unified_blocklist_log (
@@ -56,7 +69,7 @@ final class Log {
 	}
 
 	/**
-	 * Installs the table after an update that changed the schema.
+	 * Installs the tables after an update that changed the schema.
 	 */
 	public static function maybe_upgrade() {
 		if ( get_option( self::DB_VERSION_OPTION ) !== self::DB_VERSION ) {
