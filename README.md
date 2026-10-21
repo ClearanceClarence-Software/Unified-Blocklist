@@ -193,14 +193,18 @@ add_action( 'unified_blocklist_matched', function ( $hit, $context, $enforce ) {
 
 ## How it is stored
 
-| Data | Where | Autoloaded |
-| --- | --- | --- |
-| Settings | `unified_blocklist_settings`, about 0.5 KB | Yes |
-| Per-source copies | `unified_blocklist_src_*`, compressed, chunked | No |
-| Compiled list | `unified_blocklist_compiled_terms`, compressed, chunked | No |
-| Log | `{prefix}unified_blocklist_log` table | — |
+The plugin creates two tables of its own and keeps `wp_options` small.
 
-The compiled list is read only when something needs matching: a comment or a form submission, the tester, or the download button. A 66,000-term list takes about 10 ms to load and about 6 ms to check. Uninstalling removes all of it, including the log table and the per-user theme preference.
+| Data | Where |
+| --- | --- |
+| Settings | `wp_options`, one row of about 0.5 KB (autoloaded) plus a few tiny state rows (not autoloaded) |
+| Term lists: one copy per source, plus the compiled list | `{prefix}unified_blocklist_lists`, compressed, in rows of under 400 KB |
+| Match log | `{prefix}unified_blocklist_log` |
+| Theme preference | `wp_usermeta`, one row per user |
+
+No list ever goes into `wp_options`. Anyone who has debugged a site with a bloated options table will know why.
+
+The compiled list is read only when something needs matching: a comment or a form submission, the tester, or the download button. A 66,000-term list takes about 10 ms to load and about 6 ms to check. Uninstalling drops both tables and removes every option and user-meta row.
 
 ## Privacy
 

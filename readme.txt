@@ -39,7 +39,7 @@ The list is built from:
 
 = Fast =
 
-The compiled list is stored once, is never autoloaded, and is only read when someone submits a comment or form. Matching uses plain string search on a single normalized copy of the submission, which checks a 66,000-term list in a few milliseconds instead of the nearly one second WordPress core needs.
+The lists live in the plugin's own database table, not in wp_options, and are only read when someone submits a comment or form. Matching uses plain string search on a single normalized copy of the submission, which checks a 66,000-term list in a few milliseconds instead of the nearly one second WordPress core needs.
 
 = For agencies =
 
