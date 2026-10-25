@@ -988,7 +988,21 @@
 .ub-two {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-rows: auto auto 1fr;
 	gap: 0 24px;
+
+	// Each section shares the parent's rows (heading, note, card), so the cards start at
+	// the same height and end at the same height even when one note wraps to two lines.
+	> .ub-section {
+		display: grid;
+		grid-row: span 3;
+		grid-template-rows: subgrid;
+		align-content: start;
+
+		> :last-child {
+			align-self: stretch;
+		}
+	}
 }
 
 .ub-card {

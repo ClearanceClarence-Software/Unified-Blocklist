@@ -61,7 +61,9 @@ export default function Terms() {
 								'unified-blocklist'
 							) }
 						</dt>
-						<dd className="ub-muted">−{ num( c.skipped ) }</dd>
+						<dd className="ub-muted">
+							{ c.skipped ? `−${ num( c.skipped ) }` : '0' }
+						</dd>
 					</div>
 					<div>
 						<dt>
@@ -70,7 +72,9 @@ export default function Terms() {
 								'unified-blocklist'
 							) }
 						</dt>
-						<dd className="ub-muted">−{ num( c.removed ) }</dd>
+						<dd className="ub-muted">
+							{ c.removed ? `−${ num( c.removed ) }` : '0' }
+						</dd>
 					</div>
 				</dl>
 				<a

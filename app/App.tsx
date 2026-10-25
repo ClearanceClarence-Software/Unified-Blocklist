@@ -88,7 +88,7 @@ function Shell( { view, boot }: { view: View; boot: Boot } ) {
 				>
 					<Mark size={ 28 } />
 					<span className="ub-brand-name">
-						Unified{ ' ' }<em>Blocklist</em>
+						Unified <em>Blocklist</em>
 					</span>
 					<span className="ub-brand-version">{ boot.version }</span>
 				</button>
