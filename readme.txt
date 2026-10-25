@@ -1,5 +1,5 @@
 === Unified Blocklist ===
-Contributors: clearanceclarence
+Contributors: cccode
 Tags: spam, blocklist, comments, contact form 7, gravity forms
 Requires at least: 6.4
 Tested up to: 7.1
@@ -100,7 +100,7 @@ The Sources field then becomes read-only on that site.
 
 The files in build/ are compiled from TypeScript and SCSS but not minified, so you can read them as they are.
 
-The source code and build setup are on GitHub: https://github.com/ClearanceClarence/Unified-Blocklist
+The source code and build setup are on GitHub: https://github.com/ClearanceClarence-Software/Unified-Blocklist
 
 To build it yourself you need Node 20 or newer:
 
@@ -111,7 +111,7 @@ To build it yourself you need Node 20 or newer:
 
 == Credits ==
 
-Unified Blocklist bundles the Atkinson Hyperlegible Next and Atkinson Hyperlegible Mono fonts (Copyright 2020-2024 The Atkinson Hyperlegible Next / Mono Project Authors), licensed under the SIL Open Font License 1.1. The license text is in the licenses/ folder. The fonts are served from the plugin folder, not from Google.
+Unified Blocklist bundles the Bricolage Grotesque font (Copyright 2022 The Bricolage Grotesque Project Authors) and the Atkinson Hyperlegible Next and Atkinson Hyperlegible Mono fonts (Copyright 2020-2024 The Atkinson Hyperlegible Next / Mono Project Authors), all licensed under the SIL Open Font License 1.1. The license text is in the licenses/ folder. The fonts are served from the plugin folder, not from Google.
 
 The default list is the community-maintained WordPress Comment Blacklist by Grant Hutchinson (splorp): https://github.com/splorp/wordpress-comment-blacklist
 

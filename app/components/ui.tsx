@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 import { useArmed } from '../lib/hooks';
 
-// Same icon set and stroke style as Restbench, plus a few for this plugin.
+// Same icon set and stroke style as Routemark, plus a few for this plugin.
 const PATHS = {
 	search: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm9 16-4.35-4.35',
 	chevron: 'm9 6 6 6-6 6',
@@ -55,7 +55,8 @@ export function Icon( { name, size = 16 }: { name: IconName; size?: number } ) {
 	);
 }
 
-// Logo: a shield with a funnel cut into it. Fills come from CSS, so it follows the theme.
+// Logo: the CC Software hex well (as in Routemark) with a funnel inside, narrowing many
+// terms down to one marker. The well is always graphite, so the mark works on light and dark.
 export function Mark( { size = 24 }: { size?: number } ) {
 	return (
 		<svg
@@ -66,36 +67,23 @@ export function Mark( { size = 24 }: { size?: number } ) {
 			aria-hidden="true"
 			focusable="false"
 		>
+			<path d="M24 2 43.05 13v22L24 46 4.95 35V13z" fill="#3b82f6" />
 			<path
-				className="ub-mark-shield"
-				d="M24 4 41 10v13c0 10.2-7 18.2-17 21-10-2.8-17-10.8-17-21V10L24 4Z"
+				d="M24 8.5 37.42 16.25v15.5L24 39.5 10.58 31.75v-15.5z"
+				fill="#16181b"
 			/>
+			<rect x="15" y="17" width="18" height="3" rx="1.5" fill="#93c5fd" />
 			<rect
-				className="ub-mark-line"
-				x="14"
-				y="17"
-				width="20"
-				height="3.5"
-				rx="1.75"
-			/>
-			<rect
-				className="ub-mark-line"
-				x="17.5"
-				y="24"
-				width="13"
-				height="3.5"
-				rx="1.75"
+				x="18.5"
+				y="23"
+				width="11"
+				height="3"
+				rx="1.5"
+				fill="#93c5fd"
 				opacity="0.85"
 			/>
-			<rect
-				className="ub-mark-line"
-				x="21"
-				y="31"
-				width="6"
-				height="3.5"
-				rx="1.75"
-				opacity="0.7"
-			/>
+			<circle cx="24" cy="31.5" r="3.4" fill="#ffffff" />
+			<circle cx="24" cy="31.5" r="1.4" fill="#1e40af" />
 		</svg>
 	);
 }

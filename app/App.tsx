@@ -87,7 +87,9 @@ function Shell( { view, boot }: { view: View; boot: Boot } ) {
 					title={ __( 'Overview', 'unified-blocklist' ) }
 				>
 					<Mark size={ 28 } />
-					<span className="ub-brand-name">Unified Blocklist</span>
+					<span className="ub-brand-name">
+						Unified{ ' ' }<em>Blocklist</em>
+					</span>
 					<span className="ub-brand-version">{ boot.version }</span>
 				</button>
 

@@ -1,5 +1,9 @@
 <p align="center">
-  <img src=".wordpress-org/banner-1544x500.png" alt="Unified Blocklist: one blocklist for comments and forms" width="772">
+  <img src=".wordpress-org/banner-1544x500.png" alt="Unified Blocklist: one blocklist for comments and forms, by CC Software" width="772">
+</p>
+
+<p align="center">
+  <a href="https://github.com/ClearanceClarence-Software/Unified-Blocklist/actions/workflows/ci.yml"><img src="https://github.com/ClearanceClarence-Software/Unified-Blocklist/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
 Unified Blocklist is a WordPress plugin that keeps one list of blocked terms and applies it to comments and to the form plugins people actually use: Contact Form 7, Gravity Forms, WPForms and Formidable Forms. The list is built from community spam lists that update on a schedule, your own terms, and the terms you already keep in Settings › Discussion. Every match is logged with the text around it, and a term that catches something legitimate is one click away from being allowed.
@@ -89,7 +93,7 @@ If the site ran Dynamic Blacklist Updater, the Overview shows a cleanup card. It
 
 ## Install
 
-1. Download `unified-blocklist-<version>.zip` from the [latest release](https://github.com/ClearanceClarence/Unified-Blocklist/releases).
+1. Download `unified-blocklist-<version>.zip` from the [latest release](https://github.com/ClearanceClarence-Software/Unified-Blocklist/releases).
 2. In wp-admin, go to Plugins › Add New › Upload Plugin and upload the zip.
 3. Activate it, open **Settings › Unified Blocklist**, and click **Add the community list** (or enter your own list URLs and terms). The download starts right away.
 
@@ -117,7 +121,7 @@ All settings live in **Settings › Unified Blocklist**.
 | Protection | Keep log entries for | 7 to 365 days. | 30 days |
 | Protection | Store an excerpt with each match | Turn off if submissions may contain personal data you do not want kept. | On |
 
-The light or dark theme is a per-user preference, like in Restbench.
+The light or dark theme is a per-user preference, like in Routemark.
 
 ## For agencies and developers
 
@@ -218,7 +222,7 @@ Keyword lists catch known spam phrases and domains. They do not catch everything
 
 ## Development
 
-The admin screen is a React app built with `@wordpress/scripts`, the same setup and design system as [Restbench](https://github.com/ClearanceClarence/restbench). The PHP engine in `src/` works without it; the app only talks to the REST API.
+The admin screen is a React app built with `@wordpress/scripts`, the same setup and design system as [Routemark](https://github.com/ClearanceClarence-Software/Routemark). The PHP engine in `src/` works without it; the app only talks to the REST API.
 
 ```bash
 npm install
@@ -240,9 +244,28 @@ PHP follows the WordPress Coding Standards; `phpcs.xml.dist` is included.
 
 The GitHub workflow typechecks, lints, builds, and attaches the plugin zip to every push.
 
+### Brand
+
+<img src=".wordpress-org/icon-128x128.png" alt="Unified Blocklist icon" width="64" align="right">
+
+Unified Blocklist is a CC Software plugin, so it shares the CC Software look with [Routemark](https://github.com/ClearanceClarence-Software/Routemark). The name is two words. In the wordmark, "Unified" is in the text color and "Blocklist" is in blue.
+
+The mark is the CC Software hex well with a funnel inside it: two bars narrowing down to a single marker, many terms reduced to one decision. The well is always graphite, so the same mark works on light and dark backgrounds.
+
+| | |
+| --- | --- |
+| Blue `#3B82F6` | Outer hex |
+| Light blue `#93C5FD` | Funnel bars, "Blocklist" in the dark theme |
+| Dark blue `#1E40AF` | "Blocklist" on light backgrounds, marker center |
+| Graphite `#16181B` | Hex well, icon background, dark theme |
+
+The light theme has no palette of its own. It uses wp-admin's grays and the user's admin color scheme (`--wp-admin-theme-color`), so it looks like the rest of the dashboard. The dark theme uses the blues above, with `#2563EB` for the main button. Status colors (green for protection on, amber for Monitor only, red for errors) are the same in both.
+
+The wordmark is set in Bricolage Grotesque. Everything else uses Atkinson Hyperlegible Next and Mono, which keep `l`, `I` and `1` apart; that matters when you are reading spam terms that swap letters for digits. All three are bundled with the plugin under the OFL.
+
 ## Credits
 
-Unified Blocklist bundles the Atkinson Hyperlegible Next and Atkinson Hyperlegible Mono fonts (Copyright 2020–2024 The Atkinson Hyperlegible Next / Mono Project Authors), licensed under the SIL Open Font License 1.1. The license text is in `licenses/`. The fonts are served from the plugin folder, not from Google.
+Unified Blocklist bundles the Bricolage Grotesque, Atkinson Hyperlegible Next and Atkinson Hyperlegible Mono fonts, all licensed under the SIL Open Font License 1.1. The license text is in `licenses/`. The fonts are served from the plugin folder, not from Google.
 
 The default list is the community-maintained [WordPress Comment Blacklist](https://github.com/splorp/wordpress-comment-blacklist) by Grant Hutchinson.
 

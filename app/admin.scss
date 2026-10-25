@@ -1,5 +1,5 @@
 // Unified Blocklist admin styles.
-// Built on the Restbench design system: same tokens, fonts, controls and dark theme,
+// Built on the Routemark design system: same tokens, fonts, controls and dark theme,
 // so the two plugins feel like siblings. Everything is scoped under .ub.
 
 // Take over the content area on our screen only
@@ -26,7 +26,7 @@
 	}
 }
 
-// Tokens (identical values to Restbench)
+// Tokens (identical values to Routemark)
 
 .ub {
 	--ub-sans: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
@@ -56,8 +56,8 @@
 	--ub-primary: var(--wp-color);
 	--ub-primary-hover: var(--wp-color-dark);
 	--ub-on-primary: #ffffff;
-	--ub-mark: #3f6212;
-	--ub-mark-cut: #ffffff;
+	// the "Blocklist" half of the wordmark
+	--ub-brand-word: #1e40af;
 
 	--ub-ok: #16793a;
 	--ub-info: #1d5fb8;
@@ -87,16 +87,16 @@
 	--ub-text-2: #b9bec7;
 	--ub-text-3: #838994;
 
-	--ub-accent: #c3ec6a;
-	--ub-accent-strong: #d4f58c;
-	--ub-on-accent: #14190a;
-	--ub-accent-soft: rgba(195, 236, 106, 0.12);
+	// CC Software blues
+	--ub-accent: #93c5fd;
+	--ub-accent-strong: #bfdbfe;
+	--ub-on-accent: #0b1530;
+	--ub-accent-soft: rgba(147, 197, 253, 0.14);
 
-	--ub-primary: #c3ec6a;
-	--ub-primary-hover: #d4f58c;
-	--ub-on-primary: #14190a;
-	--ub-mark: #c3ec6a;
-	--ub-mark-cut: #16181b;
+	--ub-primary: #2563eb;
+	--ub-primary-hover: #1d4ed8;
+	--ub-on-primary: #ffffff;
+	--ub-brand-word: #93c5fd;
 
 	--ub-ok: #5fdc8c;
 	--ub-info: #6cb4ff;
@@ -636,18 +636,22 @@
 	gap: 10px;
 }
 
-.ub-mark-shield {
-	fill: var(--ub-mark);
+.ub-mark {
+	flex: none;
 }
 
-.ub-mark-line {
-	fill: var(--ub-mark-cut);
-}
-
+// logo + wordmark (Bricolage Grotesque is only used here), as in Routemark
 .ub-brand-name {
-	font-size: 18px;
+	font-family: "Bricolage Grotesque", var(--ub-sans);
+	font-size: 20px;
 	font-weight: 700;
-	letter-spacing: -0.01em;
+	line-height: 1;
+	letter-spacing: -0.02em;
+
+	em {
+		font-style: normal;
+		color: var(--ub-brand-word);
+	}
 	white-space: nowrap;
 }
 
@@ -1301,7 +1305,7 @@
 	margin-top: 14px;
 }
 
-// Settings rows (same as Restbench)
+// Settings rows (same as Routemark)
 
 .ub-setting {
 	display: flex;

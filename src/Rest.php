@@ -231,7 +231,7 @@ final class Rest {
 	}
 
 	/**
-	 * The current user's theme. A preference, so it is per user like in Restbench.
+	 * The current user's theme. A preference, so it is per user like in Routemark.
 	 *
 	 * @return string
 	 */
