@@ -1056,7 +1056,9 @@
 }
 
 .ub-callout-action {
+	display: flex;
 	flex: none;
+	gap: 8px;
 }
 
 // Tiles
@@ -2275,5 +2277,178 @@
 	.ub *::after {
 		animation: none !important;
 		transition: none !important;
+	}
+}
+
+// Repeated matches collapsed into one log row
+
+.ub-repeat {
+	display: inline-flex;
+	align-items: center;
+	height: 22px;
+	padding: 0 7px;
+	font-family: var(--ub-mono);
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--ub-text-2);
+	background: var(--ub-sunken);
+	border: 1px solid var(--ub-line);
+	border-radius: 4px;
+	cursor: default;
+}
+
+// Rescued messages: terms to consider allowing
+
+.ub .ub-rescues {
+	--c: var(--ub-warn);
+	border-color: soft(--c, 35%);
+	overflow: hidden;
+}
+
+.ub-rescues-head {
+	display: flex;
+	gap: 12px;
+	padding: 14px 16px 12px;
+	background: soft(--c, 7%);
+	border-bottom: 1px solid soft(--c, 22%);
+
+	p {
+		margin-top: 2px !important;
+		font-size: 13.5px;
+	}
+}
+
+.ub-rescues-icon {
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	color: var(--c);
+	background: soft(--c, 14%);
+	border-radius: 50%;
+}
+
+.ub .ub-rescues-title {
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1.35;
+}
+
+.ub-rescues-list li {
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+	padding: 12px 16px;
+
+	& + li {
+		border-top: 1px solid var(--ub-line);
+	}
+
+	.ub-log-line .ub-muted {
+		font-size: 13.5px;
+	}
+}
+
+.ub-rescues-main {
+	flex: 1;
+	min-width: 0;
+}
+
+.ub-rescues-actions {
+	display: flex;
+	flex: none;
+	gap: 6px;
+}
+
+.ub .ub-rescues-more {
+	margin: 0 !important;
+	padding: 10px 16px;
+	border-top: 1px solid var(--ub-line);
+}
+
+// Replay recent messages
+
+.ub-replay {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+
+	.ub-callout,
+	.ub-note {
+		margin: 0 !important;
+	}
+
+	.ub-log {
+		border: 1px solid var(--ub-line);
+	}
+
+	// Narrow column under an editor: who and where on one line, the match below.
+	&.is-compact .ub-log-row {
+		grid-template-areas: "where actions" "main main";
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 4px 12px;
+
+		.ub-log-when {
+			display: none;
+		}
+
+		.ub-log-where {
+			grid-area: where;
+			flex-direction: row;
+			align-items: baseline;
+			gap: 8px;
+		}
+
+		.ub-log-main {
+			grid-area: main;
+		}
+
+		.ub-log-actions {
+			grid-area: actions;
+		}
+	}
+}
+
+.ub-replay-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	font-size: 13.5px;
+}
+
+.ub .ub-replay-terms {
+	margin: 0;
+}
+
+.ub-list-editor-foot {
+	margin-top: 14px;
+	padding-top: 14px;
+	border-top: 1px dashed var(--ub-line);
+}
+
+.ub-stack--tight:not(:empty) {
+	margin-bottom: 12px;
+}
+
+@media (max-width: 782px) {
+	.ub-rescues-list li {
+		flex-direction: column;
+	}
+}
+
+@media (max-width: 600px) {
+	.ub-callout {
+		flex-wrap: wrap;
+	}
+
+	.ub-callout-body {
+		flex-basis: calc(100% - 40px);
+	}
+
+	.ub-callout-action {
+		flex-wrap: wrap;
+		margin-left: 28px;
 	}
 }

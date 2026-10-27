@@ -1,6 +1,8 @@
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
+import { DiscussionMoveRow } from '../components/DiscussionMove';
 import ListEditor, { termsUnit } from '../components/ListEditor';
+import ReplayPanel from '../components/ReplayPanel';
 import { Icon, PageHead, Row, Section, Seg, Toggle } from '../components/ui';
 import { num } from '../lib/format';
 import { useStore } from '../store';
@@ -113,6 +115,23 @@ export default function Terms() {
 							onSave={ ( local_terms ) =>
 								update( { local_terms }, false )
 							}
+							footer={ ( added ) => (
+								<ReplayPanel
+									key={ added.join( '\n' ) }
+									terms={ added }
+									compact
+									buttonLabel={ sprintf(
+										/* translators: %s: number of new terms */
+										_n(
+											'Check %s new term against recent messages',
+											'Check %s new terms against recent messages',
+											added.length,
+											'unified-blocklist'
+										),
+										num( added.length )
+									) }
+								/>
+							) }
 						/>
 					</div>
 				</Section>
@@ -142,6 +161,9 @@ export default function Terms() {
 			</div>
 
 			<Section title={ __( 'Matching', 'unified-blocklist' ) }>
+				<div className="ub-stack ub-stack--tight">
+					<DiscussionMoveRow />
+				</div>
 				<div className="ub-card">
 					<Row
 						label={ __( 'Match terms', 'unified-blocklist' ) }

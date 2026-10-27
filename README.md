@@ -22,6 +22,7 @@ WordPress has a built-in list of disallowed words, and it is a fine place for a 
 
 - **It only covers comments.** The form plugins each have their own filters, their own settings pages, and in some cases nothing at all.
 - **It is slow.** Core runs one regular expression per term, per field, per comment. With 66,000 terms, that is about 0.9 seconds of CPU for every comment. Unified Blocklist checks the same list in about 6 ms.
+- **It runs even when you use this plugin.** If the Discussion field has lines in it, WordPress keeps checking them on every comment. One click moves them into Unified Blocklist (lines your downloaded lists already have are skipped, IP addresses stay put, and it can be undone), so that check stops.
 - **It is loaded on every page view.** The option is autoloaded, so every request to the site carries almost a megabyte it never uses.
 - **You never see what it caught.** Matches go straight to Trash, nothing records which term fired, and a word like *billig* ("cheap" in Norwegian) can silently eat real messages for months.
 
@@ -61,6 +62,9 @@ Downloads are careful about what they accept:
 </p>
 
 - **Activity log.** Every match with where it happened, which field, which term, and a short excerpt with the term highlighted. Search it, filter by place or result, and click **Allow** on any row. The toast has an Undo.
+- **Replay before you rely on it.** Run the whole list over your recent approved comments and saved form entries (Gravity Forms, Formidable, and Contact Form 7 through Flamingo) and see exactly which real messages it would have stopped. Type new terms into Your terms and check them the same way before you save. Nothing is logged or changed.
+- **Learns from your moderators.** Mark a blocked comment "Not spam", restore it from Trash or approve a held one, or mark a Gravity Forms entry as not spam, and the term that caught it shows up as a suggestion on the Overview, the Activity page and the dashboard widget: **Allow** or **Keep blocking**. Nothing is allowed on its own.
+- **Quiet during spam waves.** Repeats of the same term in the same place within a minute share one log row with a count (×240), instead of 240 rows.
 - **Monitor only.** Log matches without blocking anything. Run it for a week on a busy site, read the log, build your exceptions, then switch to Enforce.
 - **Whole-word matching** as an option, so "cash" no longer matches "cashew". Community lists are written for substring matching, which stays the default.
 - **Minimum term length.** Two-character entries from downloaded lists cause most accidental matches, so terms shorter than three characters are skipped by default. Your own terms are always used.
@@ -234,6 +238,17 @@ npm run zip        # build + dist/unified-blocklist-<version>.zip
 
 PHP follows the WordPress Coding Standards; `phpcs.xml.dist` is included.
 
+### End-to-end tests
+
+The tests in `tests/e2e` run against a real WordPress with Contact Form 7, Flamingo, WPForms Lite and Formidable installed from wordpress.org. Playwright fills in and submits the real forms and comment form as a logged-out visitor, clicks "Not Spam" in Comments, and drives the admin app. A small test-only plugin in `tests/e2e/fixtures` creates the forms and resets the site between tests; remote lists are never fetched, so the tests don't depend on the network.
+
+```bash
+npm run env:start   # wp-env on http://localhost:8888, needs Docker
+npm run test:e2e
+```
+
+Point `WP_BASE_URL` at another site set up the same way to run them there. Gravity Forms is commercial and can't be installed in CI, so its hooks are covered by the unit-level checks only.
+
 | Folder | What's in it |
 | --- | --- |
 | `src/` | PHP: engine, integrations, REST API, admin mount, dashboard widget |
@@ -242,7 +257,7 @@ PHP follows the WordPress Coding Standards; `phpcs.xml.dist` is included.
 | `licenses/` | Font licenses (Atkinson Hyperlegible, OFL) |
 | `.wordpress-org/` | Icon, banners and screenshots for the plugin directory |
 
-The GitHub workflow typechecks, lints, builds, and attaches the plugin zip to every push.
+The GitHub workflow typechecks, lints, builds and attaches the plugin zip to every push, and runs the end-to-end tests in wp-env.
 
 ### Brand
 

@@ -21,6 +21,7 @@ function unified_blocklist_uninstall_site() {
 	}
 
 	delete_metadata( 'user', 0, 'unified_blocklist_theme', '', true );
+	delete_metadata( 'comment', 0, '_unified_blocklist_term', '', true );
 
 	wp_clear_scheduled_hook( 'unified_blocklist_sync' );
 	wp_clear_scheduled_hook( 'unified_blocklist_prune' );

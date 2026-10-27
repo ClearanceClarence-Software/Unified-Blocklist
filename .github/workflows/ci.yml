@@ -24,3 +24,28 @@ jobs:
         with:
           name: unified-blocklist-plugin
           path: dist/*.zip
+
+  # Real WordPress in Docker (wp-env) with Contact Form 7, Flamingo, WPForms Lite and
+  # Formidable from wordpress.org, then Playwright submits real forms and comments.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run env:start
+      - run: npm run test:e2e
+      - name: Upload the report if something failed
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

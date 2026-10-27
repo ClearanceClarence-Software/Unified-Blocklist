@@ -3,7 +3,7 @@
  * Plugin Name:       Unified Blocklist
  * Plugin URI:        https://github.com/ClearanceClarence-Software/Unified-Blocklist
  * Description:       One blocklist for comments and forms. Syncs community spam lists, merges your own terms and exceptions, and logs every block so false positives are visible.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            CC Software
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'UNIFIED_BLOCKLIST_VERSION', '1.0.0' );
+define( 'UNIFIED_BLOCKLIST_VERSION', '1.1.0' );
 define( 'UNIFIED_BLOCKLIST_FILE', __FILE__ );
 define( 'UNIFIED_BLOCKLIST_DIR', plugin_dir_path( __FILE__ ) );
 define( 'UNIFIED_BLOCKLIST_URL', plugin_dir_url( __FILE__ ) );

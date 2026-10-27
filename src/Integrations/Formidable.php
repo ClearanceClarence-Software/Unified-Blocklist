@@ -65,7 +65,7 @@ final class Formidable {
 	 * @param int $field_id Field ID.
 	 * @return string
 	 */
-	private static function label( $field_id ) {
+	public static function label( $field_id ) {
 		if ( class_exists( 'FrmField' ) && method_exists( 'FrmField', 'getOne' ) ) {
 			$field = \FrmField::getOne( $field_id );
 			if ( is_object( $field ) && ! empty( $field->name ) ) {

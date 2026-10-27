@@ -4,7 +4,7 @@ Tags: spam, blocklist, comments, contact form 7, gravity forms
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,9 @@ The list is built from:
 * **Monitor only** mode logs matches without blocking anything, so you can try it on a live site first.
 * **Whole-word matching** as an option.
 * **Test** tab: paste any message and see exactly which terms it matches and which list they come from.
+* **Replay before you rely on it**: run the whole list, or a few new terms before you save them, over your recent approved comments and saved form entries (Gravity Forms, Formidable, Contact Form 7 through Flamingo) and see what it would have stopped.
+* **Learns from your moderators**: when someone marks a blocked comment "Not spam", restores or approves it, or marks a Gravity Forms entry as not spam, the term that caught it is suggested as an exception. Nothing is allowed until you click Allow.
+* **Quiet log during spam waves**: repeats of the same term in the same place within a minute share one log row with a count.
 * **Dashboard widget** with the last 7 and 30 days, a per-day chart, the most matched terms, and anything that needs attention.
 
 = Fast =
@@ -46,6 +49,10 @@ The lists live in the plugin's own database table, not in wp_options, and are on
 * Define sources in `wp-config.php` with `UNIFIED_BLOCKLIST_SOURCES` to manage them centrally.
 * WP-CLI: `wp unified-blocklist sync`, `status`, `test "<text>"`, `rebuild`.
 * Filters: `unified_blocklist_settings`, `unified_blocklist_terms`, `unified_blocklist_fields`, `unified_blocklist_enforce`; action `unified_blocklist_matched`.
+
+= Stop WordPress checking comments twice =
+
+If Settings › Discussion › Disallowed Comment Keys has lines in it, WordPress checks them itself on every comment, one regular expression per line. One click moves them into Unified Blocklist, where they are checked once and cover your forms too. Lines your downloaded lists already have are not copied, IP addresses stay where WordPress can check them, and the move can be undone.
 
 = Moving from Dynamic Blacklist Updater =
 
@@ -116,6 +123,13 @@ Unified Blocklist bundles the Bricolage Grotesque font (Copyright 2022 The Brico
 The default list is the community-maintained WordPress Comment Blacklist by Grant Hutchinson (splorp): https://github.com/splorp/wordpress-comment-blacklist
 
 == Changelog ==
+
+= 1.1.0 =
+* New: replay the list, or new terms before saving, over recent approved comments and form entries.
+* New: suggestions to allow a term when a moderator rescues a message it stopped.
+* New: move the Discussion settings list into the plugin in one click, with undo.
+* Changed: repeated matches within a minute share one log row with a count.
+* Development: end-to-end tests with real Contact Form 7, Flamingo, WPForms Lite and Formidable forms in wp-env.
 
 = 1.0.0 =
 * First release.

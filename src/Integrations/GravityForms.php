@@ -37,6 +37,30 @@ final class GravityForms {
 			return $is_spam;
 		}
 
+		$fields = self::fields( $form, $entry );
+
+		$form_id = isset( $form['id'] ) ? (int) $form['id'] : 0;
+		$hit     = Guard::check( 'gravityforms', $fields, 'spam', $form_id ? 'form:' . $form_id : '' );
+		if ( null === $hit ) {
+			return $is_spam;
+		}
+
+		if ( method_exists( 'GFCommon', 'set_spam_filter' ) ) {
+			/* translators: %s: matched term. */
+			\GFCommon::set_spam_filter( $form_id, 'Unified Blocklist', sprintf( __( 'Matched "%s".', 'unified-blocklist' ), $hit->term ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Entry values by field label. Fields with several inputs (name, address) are grouped.
+	 *
+	 * @param array $form  Form.
+	 * @param array $entry Entry.
+	 * @return array Label => values.
+	 */
+	public static function fields( array $form, array $entry ) {
 		$fields = array();
 		foreach ( isset( $form['fields'] ) ? (array) $form['fields'] : array() as $field ) {
 			$id    = is_object( $field ) ? $field->id : ( isset( $field['id'] ) ? $field['id'] : null );
@@ -63,19 +87,7 @@ final class GravityForms {
 				$fields[ $label ] = $value;
 			}
 		}
-
-		$form_id = isset( $form['id'] ) ? (int) $form['id'] : 0;
-		$hit     = Guard::check( 'gravityforms', $fields, 'spam', $form_id ? 'form:' . $form_id : '' );
-		if ( null === $hit ) {
-			return $is_spam;
-		}
-
-		if ( method_exists( 'GFCommon', 'set_spam_filter' ) ) {
-			/* translators: %s: matched term. */
-			\GFCommon::set_spam_filter( $form_id, 'Unified Blocklist', sprintf( __( 'Matched "%s".', 'unified-blocklist' ), $hit->term ) );
-		}
-
-		return true;
+		return $fields;
 	}
 
 	/**

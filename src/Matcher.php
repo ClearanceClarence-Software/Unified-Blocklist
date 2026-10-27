@@ -113,6 +113,120 @@ final class Matcher {
 	}
 
 	/**
+	 * Finds matches in many documents at once. All documents go into one haystack, so each term
+	 * costs one strpos() pass however many documents there are.
+	 *
+	 * @param array<int, array> $docs    Documents, each an array of label => value.
+	 * @param int               $per_doc Most hits kept per document.
+	 * @return array<int, Hit[]> Hits by document index. Documents without hits are left out.
+	 */
+	public function scan( array $docs, $per_doc = 3 ) {
+		$haystack = '';
+		$ranges   = array();
+		$starts   = array();
+		$owners   = array();
+
+		foreach ( $docs as $index => $fields ) {
+			$starts[] = strlen( $haystack );
+			$owners[] = $index;
+			foreach ( (array) $fields as $label => $value ) {
+				$value = self::normalize( self::stringify( $value ) );
+				if ( '' === $value ) {
+					continue;
+				}
+				$start     = strlen( $haystack );
+				$ranges[]  = array( $start, $start + strlen( $value ), (string) $label );
+				$haystack .= $value . "\n";
+			}
+			// An empty line between documents. Normalized terms never contain a newline.
+			$haystack .= "\n";
+		}
+
+		$hits = array();
+		if ( '' === trim( $haystack ) ) {
+			return $hits;
+		}
+
+		// Every 4-byte sequence in the haystack. A term with a sequence that is not in this set
+		// cannot occur, so most of a large list is ruled out with a few lookups instead of a
+		// strpos() over the whole haystack.
+		$grams = array();
+		$last  = strlen( $haystack ) - 4;
+		for ( $i = 0; $i <= $last; $i++ ) {
+			$grams[ substr( $haystack, $i, 4 ) ] = true;
+		}
+
+		foreach ( $this->terms as $term ) {
+			$len = strlen( $term );
+			if ( $len >= 4 && ( ! isset( $grams[ substr( $term, 0, 4 ) ] ) || ! isset( $grams[ substr( $term, -4 ) ] ) || ( $len >= 8 && ! isset( $grams[ substr( $term, ( $len >> 1 ) - 2, 4 ) ] ) ) ) ) {
+				continue;
+			}
+			$pos = strpos( $haystack, $term );
+			while ( false !== $pos ) {
+				$doc = self::owner( $starts, $pos );
+				if ( 'substring' === $this->mode || $this->at_word_boundaries( $haystack, $term, $pos ) ) {
+					$owner = $owners[ $doc ];
+					if ( ! isset( $hits[ $owner ] ) || count( $hits[ $owner ] ) < $per_doc ) {
+						$hits[ $owner ][] = $this->hit( $haystack, self::field_range( $ranges, $pos ), $term, $pos );
+					}
+					// One hit per term per document is enough: go on from the next document.
+					if ( ! isset( $starts[ $doc + 1 ] ) ) {
+						break;
+					}
+					$pos = strpos( $haystack, $term, $starts[ $doc + 1 ] );
+					continue;
+				}
+				$pos = strpos( $haystack, $term, $pos + 1 );
+			}
+		}
+
+		ksort( $hits );
+		return $hits;
+	}
+
+	/**
+	 * Index of the document that contains a byte offset.
+	 *
+	 * @param int[] $starts Document start offsets, ascending.
+	 * @param int   $pos    Offset.
+	 * @return int
+	 */
+	private static function owner( array $starts, $pos ) {
+		$lo = 0;
+		$hi = count( $starts ) - 1;
+		while ( $lo < $hi ) {
+			$mid = ( $lo + $hi + 1 ) >> 1;
+			if ( $starts[ $mid ] <= $pos ) {
+				$lo = $mid;
+			} else {
+				$hi = $mid - 1;
+			}
+		}
+		return $lo;
+	}
+
+	/**
+	 * The one field range that contains an offset, as a list for hit().
+	 *
+	 * @param array $ranges Ranges, ascending.
+	 * @param int   $pos    Offset.
+	 * @return array
+	 */
+	private static function field_range( array $ranges, $pos ) {
+		$lo = 0;
+		$hi = count( $ranges ) - 1;
+		while ( $lo < $hi ) {
+			$mid = ( $lo + $hi + 1 ) >> 1;
+			if ( $ranges[ $mid ][0] <= $pos ) {
+				$lo = $mid;
+			} else {
+				$hi = $mid - 1;
+			}
+		}
+		return isset( $ranges[ $lo ] ) ? array( $ranges[ $lo ] ) : array();
+	}
+
+	/**
 	 * First match, or null.
 	 *
 	 * @param array $fields Label => value.

@@ -75,7 +75,37 @@ export interface State {
 	};
 	available: Record< Context, boolean >;
 	coreLines: number;
+	coreIps: number;
+	coreMoved: { at: number; moved: number } | null;
+	rescues: Rescue[];
 	legacy: LegacyReport | null;
+}
+
+export interface Rescue {
+	term: string;
+	count: number;
+	last: number;
+	context: Context;
+	example: string;
+}
+
+export interface ReplayMatch {
+	kind: Context | 'other';
+	id: number;
+	label: string;
+	date: string;
+	url: string;
+	hits: Array< { term: string; field: string; excerpt: string } >;
+}
+
+export interface ReplayResult {
+	terms: number;
+	scanned: Partial< Record< Context | 'other', number > >;
+	total: number;
+	matched: number;
+	matches: ReplayMatch[];
+	byTerm: Array< { term: string; messages: number } >;
+	ms: number;
 }
 
 export interface SyncResult {
@@ -98,6 +128,8 @@ export interface LogRow {
 	refLabel: string;
 	refUrl: string;
 	excerpt: string | null;
+	hits: number;
+	lastTime: string | null;
 }
 
 export interface TestHit {

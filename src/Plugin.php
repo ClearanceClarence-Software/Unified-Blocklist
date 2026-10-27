@@ -41,6 +41,7 @@ final class Plugin {
 		Integrations\GravityForms::register();
 		Integrations\WPForms::register();
 		Integrations\Formidable::register();
+		Rescues::register();
 
 		Rest::register();
 

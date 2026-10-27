@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { api, errorMessage } from '../api';
+import ReplayPanel from '../components/ReplayPanel';
 import {
 	AllowButton,
 	Callout,
 	Highlighted,
 	Icon,
 	PageHead,
+	Section,
 } from '../components/ui';
 import { highlight, num } from '../lib/format';
 import { useDebounced } from '../lib/hooks';
@@ -460,6 +462,18 @@ export default function Tester() {
 					</ul>
 				</>
 			) }
+
+			<Section
+				title={ __( 'Replay recent messages', 'unified-blocklist' ) }
+				note={ __(
+					'Runs the whole list over your latest approved comments and saved form entries, so you see what it would stop among real messages before relying on it. Nothing is changed.',
+					'unified-blocklist'
+				) }
+			>
+				<div className="ub-card ub-card--pad">
+					<ReplayPanel />
+				</div>
+			</Section>
 		</div>
 	);
 }

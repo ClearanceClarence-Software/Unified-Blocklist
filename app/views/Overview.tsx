@@ -1,7 +1,9 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import ActivityChart from '../components/ActivityChart';
+import { MoveButton, useDiscussionMove } from '../components/DiscussionMove';
 import LegacyCard from '../components/LegacyCard';
+import RescueCard from '../components/RescueCard';
 import {
 	AllowButton,
 	Callout,
@@ -35,6 +37,7 @@ export default function Overview() {
 	 ).filter( ( c ) => isProtected( c ) ).length;
 	const topMax = Math.max( 1, ...a.topTerms.map( ( t ) => t.hits ) );
 	const next = state.sync.next;
+	const { movable } = useDiscussionMove();
 
 	function isProtected( c: Context ) {
 		if ( ! state.available[ c ] ) {
@@ -66,6 +69,27 @@ export default function Overview() {
 			<div className="ub-stack">
 				{ state.legacy && <LegacyCard report={ state.legacy } /> }
 
+				<RescueCard limit={ 3 } />
+
+				{ ! state.legacy && movable >= 100 && (
+					<Callout tone="info" icon="gauge" action={ <MoveButton /> }>
+						<strong>
+							{ __(
+								'Comments are checked twice.',
+								'unified-blocklist'
+							) }
+						</strong>{ ' ' }
+						{ sprintf(
+							/* translators: %s: number of lines */
+							__(
+								'WordPress runs its own check over the %s lines in Discussion settings, one at a time, on every comment. Move them here and that check is skipped.',
+								'unified-blocklist'
+							),
+							num( movable )
+						) }
+					</Callout>
+				) }
+
 				{ state.terms.error && (
 					<Callout tone="err" icon="alert">
 						<strong>
@@ -83,13 +107,30 @@ export default function Overview() {
 						tone="warn"
 						icon="eye"
 						action={
-							<button
-								type="button"
-								className="ub-btn ub-btn--outline"
-								onClick={ () => update( { mode: 'enforce' } ) }
-							>
-								{ __( 'Start enforcing', 'unified-blocklist' ) }
-							</button>
+							<>
+								<button
+									type="button"
+									className="ub-btn ub-btn--ghost"
+									onClick={ () => go( 'test' ) }
+								>
+									{ __(
+										'Replay recent messages',
+										'unified-blocklist'
+									) }
+								</button>
+								<button
+									type="button"
+									className="ub-btn ub-btn--outline"
+									onClick={ () =>
+										update( { mode: 'enforce' } )
+									}
+								>
+									{ __(
+										'Start enforcing',
+										'unified-blocklist'
+									) }
+								</button>
+							</>
 						}
 					>
 						<strong>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { api, errorMessage } from '../api';
+import RescueCard from '../components/RescueCard';
 import {
 	AllowButton,
 	ArmedButton,
@@ -86,12 +87,16 @@ export default function Log() {
 				lede={ sprintf(
 					/* translators: %d: retention in days */
 					__(
-						'Every match from comments and forms, kept for %d days. If something legitimate was caught, allow the term and it stops matching right away.',
+						'Every match from comments and forms, kept for %d days. Repeats of the same term within a minute share one row. If something legitimate was caught, allow the term and it stops matching right away.',
 						'unified-blocklist'
 					),
 					settings.log_retention
 				) }
 			/>
+
+			<div className="ub-stack">
+				<RescueCard />
+			</div>
 
 			<div className="ub-toolbar">
 				<label className="ub-search" htmlFor="ub-log-search">
@@ -220,11 +225,15 @@ export default function Log() {
 							<li key={ row.id } className="ub-log-row">
 								<div
 									className="ub-log-when"
-									title={ dateTime( row.time ) }
+									title={ dateTime(
+										row.lastTime ?? row.time
+									) }
 								>
 									{ ago(
 										Math.floor(
-											Date.parse( row.time ) / 1000
+											Date.parse(
+												row.lastTime ?? row.time
+											) / 1000
 										),
 										state.now
 									) }
@@ -256,6 +265,38 @@ export default function Log() {
 											{ RESULT_LABELS[ row.action ] ??
 												row.action }
 										</span>
+										{ row.hits > 1 && (
+											<span
+												className="ub-repeat"
+												title={
+													row.lastTime
+														? sprintf(
+																/* translators: 1: number of matches, 2: first time, 3: last time */
+																__(
+																	'%1$s matches from %2$s to %3$s',
+																	'unified-blocklist'
+																),
+																num( row.hits ),
+																dateTime(
+																	row.time
+																),
+																dateTime(
+																	row.lastTime
+																)
+															)
+														: undefined
+												}
+											>
+												{ sprintf(
+													/* translators: %s: number of repeated matches */
+													__(
+														'×%s',
+														'unified-blocklist'
+													),
+													num( row.hits )
+												) }
+											</span>
+										) }
 										<code className="ub-term">
 											{ row.term }
 										</code>

@@ -124,6 +124,169 @@ final class TermList {
 	}
 
 	/**
+	 * Most terms "Your terms" can hold after a move. They live in the small settings row, so a
+	 * full community list pasted into Discussion settings is refused rather than copied there.
+	 */
+	const MOVE_MAX = 5000;
+
+	/**
+	 * Storage keys for undoing a move.
+	 */
+	const MOVE_BACKUP = 'discussion_backup';
+	const MOVE_ADDED  = 'discussion_added';
+	const MOVE_OPTION = 'unified_blocklist_discussion_moved';
+
+	/**
+	 * Moves the lines in Settings › Discussion › Disallowed Comment Keys into this plugin, so
+	 * WordPress no longer runs one regular expression per line on every comment.
+	 *
+	 * Lines a downloaded list already has are not copied. Lines that are IP addresses stay in
+	 * Discussion settings: WordPress checks those against the commenter's IP, which this plugin
+	 * does not look at.
+	 *
+	 * @return array{moved: int, added: int, kept: int}|\WP_Error
+	 */
+	public static function move_core() {
+		$lines = array_values( self::core_terms() );
+		$keep  = array();
+		$move  = array();
+		foreach ( $lines as $line ) {
+			if ( self::is_ip( $line ) ) {
+				$keep[] = $line;
+			} else {
+				$move[] = $line;
+			}
+		}
+		if ( ! $move ) {
+			return new \WP_Error( 'nothing', __( 'There is nothing to move: the Discussion list is empty or only has IP addresses.', 'unified-blocklist' ) );
+		}
+
+		$have = array();
+		foreach ( (array) Settings::get( 'sources' ) as $url ) {
+			foreach ( Sources::terms_for( $url ) as $term ) {
+				$have[ Matcher::normalize( $term ) ] = true;
+			}
+		}
+		$local = (array) Settings::get( 'local_terms' );
+		foreach ( $local as $term ) {
+			$have[ Matcher::normalize( $term ) ] = true;
+		}
+
+		$added = array();
+		foreach ( $move as $line ) {
+			$norm = Matcher::normalize( $line );
+			if ( '' !== $norm && ! isset( $have[ $norm ] ) ) {
+				$have[ $norm ] = true;
+				$added[]       = Settings::clean_term( $line );
+			}
+		}
+
+		if ( count( $local ) + count( $added ) > self::MOVE_MAX ) {
+			return new \WP_Error(
+				'too_many',
+				sprintf(
+					/* translators: 1: number of lines, 2: maximum. */
+					__( '%1$s lines are not in your downloaded lists, more than the %2$s that fit in Your terms. If this is a copy of a community list, add that list as a source instead, then try again.', 'unified-blocklist' ),
+					number_format_i18n( count( $added ) ),
+					number_format_i18n( self::MOVE_MAX )
+				)
+			);
+		}
+
+		// Keep what was there, in the lists table, so the move can be undone.
+		$backup = Storage::put( self::MOVE_BACKUP, $lines );
+		if ( is_wp_error( $backup ) ) {
+			return $backup;
+		}
+		Storage::put( self::MOVE_ADDED, $added );
+
+		Settings::set( 'local_terms', array_merge( $local, $added ) );
+		self::set_core( $keep );
+		update_option(
+			self::MOVE_OPTION,
+			array(
+				'at'    => time(),
+				'moved' => count( $move ),
+			),
+			false
+		);
+		self::rebuild();
+
+		return array(
+			'moved' => count( $move ),
+			'added' => count( $added ),
+			'kept'  => count( $keep ),
+		);
+	}
+
+	/**
+	 * Puts the Discussion list back as it was before the move and removes the terms it added.
+	 *
+	 * @return true|\WP_Error
+	 */
+	public static function restore_core() {
+		$lines = Storage::get( self::MOVE_BACKUP, true );
+		if ( ! is_array( $lines ) ) {
+			return new \WP_Error( 'no_backup', __( 'There is no earlier Discussion list to put back.', 'unified-blocklist' ) );
+		}
+		$added = Storage::get( self::MOVE_ADDED, true );
+		$added = array_flip( array_map( array( Matcher::class, 'normalize' ), is_array( $added ) ? $added : array() ) );
+
+		$local = array_filter(
+			(array) Settings::get( 'local_terms' ),
+			static function ( $term ) use ( $added ) {
+				return ! isset( $added[ Matcher::normalize( $term ) ] );
+			}
+		);
+		Settings::set( 'local_terms', array_values( $local ) );
+		self::set_core( $lines );
+
+		Storage::delete( self::MOVE_BACKUP );
+		Storage::delete( self::MOVE_ADDED );
+		delete_option( self::MOVE_OPTION );
+		self::rebuild();
+		return true;
+	}
+
+	/**
+	 * When the Discussion list was last moved, if it can still be undone.
+	 *
+	 * @return array{at: int, moved: int}|null
+	 */
+	public static function moved() {
+		$moved = get_option( self::MOVE_OPTION );
+		return is_array( $moved ) && isset( $moved['at'] ) ? array(
+			'at'    => (int) $moved['at'],
+			'moved' => (int) $moved['moved'],
+		) : null;
+	}
+
+	/**
+	 * Writes the Discussion list without triggering a second rebuild.
+	 *
+	 * @param string[] $lines Lines.
+	 */
+	private static function set_core( array $lines ) {
+		remove_action( 'update_option_disallowed_keys', array( self::class, 'rebuild_if_core_included' ) );
+		update_option( 'disallowed_keys', implode( "\n", $lines ) );
+		add_action( 'update_option_disallowed_keys', array( self::class, 'rebuild_if_core_included' ) );
+	}
+
+	/**
+	 * Whether a Discussion line is an IP address or the start of one ("192.168.", "2001:db8:").
+	 *
+	 * @param string $line Line.
+	 * @return bool
+	 */
+	public static function is_ip( $line ) {
+		$line = trim( (string) $line );
+		return '' !== $line
+			&& (bool) preg_match( '/^[0-9a-f:.]+$/i', $line )
+			&& (bool) preg_match( '/\d/', $line )
+			&& (bool) preg_match( '/^(\d{1,3}\.){1,3}\d{0,3}$|:/', $line );
+	}
+
+	/**
 	 * The compiled record.
 	 *
 	 * @return array

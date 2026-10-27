@@ -14,8 +14,18 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Log {
 
-	const DB_VERSION        = '2';
+	const DB_VERSION        = '3';
 	const DB_VERSION_OPTION = 'unified_blocklist_db_version';
+
+	/**
+	 * Matches of the same term in the same place this close together share one row.
+	 */
+	const COLLAPSE_SECONDS = 60;
+
+	/**
+	 * A shared row is closed after this long, so a steady flood still shows up day by day.
+	 */
+	const COLLAPSE_MAX_SECONDS = 3600;
 
 	/**
 	 * Table name.
@@ -59,8 +69,11 @@ final class Log {
 				field varchar(100) NOT NULL DEFAULT '',
 				ref varchar(64) NOT NULL DEFAULT '',
 				excerpt text NULL,
+				hits int(10) unsigned NOT NULL DEFAULT 1,
+				last_at datetime NULL,
 				PRIMARY KEY  (id),
 				KEY created_at (created_at),
+				KEY last_at (last_at),
 				KEY context (context)
 			) {$charset};"
 		);
@@ -78,30 +91,72 @@ final class Log {
 	}
 
 	/**
-	 * Adds a row.
+	 * Adds a row, or counts the match on a recent row for the same term in the same place.
+	 * A spam wave then becomes one row with a count instead of thousands of identical rows.
 	 *
 	 * @param string $context Integration slug.
 	 * @param string $action  Action taken.
 	 * @param Hit    $hit     Match.
 	 * @param string $ref     Reference.
+	 * @return int Row ID.
 	 */
 	public static function add( $context, $action, Hit $hit, $ref = '' ) {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table write.
+		$now     = time();
+		$context = substr( (string) $context, 0, 32 );
+		$action  = substr( (string) $action, 0, 16 );
+		$term    = mb_substr( $hit->term, 0, 500 );
+		$field   = mb_substr( $hit->field, 0, 100 );
+		$ref     = substr( (string) $ref, 0, 64 );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table; its name is not user input.
+		$recent = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$wpdb->prefix}unified_blocklist_log
+				WHERE last_at >= %s AND created_at >= %s
+				AND context = %s AND action = %s AND term = %s AND field = %s
+				ORDER BY id DESC LIMIT 1",
+				gmdate( 'Y-m-d H:i:s', $now - self::COLLAPSE_SECONDS ),
+				gmdate( 'Y-m-d H:i:s', $now - self::COLLAPSE_MAX_SECONDS ),
+				$context,
+				$action,
+				$term,
+				$field
+			)
+		);
+
+		if ( $recent ) {
+			// A wave across several posts or forms keeps one row; the reference is then cleared.
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->prefix}unified_blocklist_log SET hits = hits + 1, last_at = %s, ref = CASE WHEN ref = %s THEN ref ELSE '' END WHERE id = %d",
+					gmdate( 'Y-m-d H:i:s', $now ),
+					$ref,
+					$recent
+				)
+			);
+			return $recent;
+		}
+
 		$wpdb->insert(
 			self::table(),
 			array(
-				'created_at' => current_time( 'mysql', true ),
-				'context'    => substr( (string) $context, 0, 32 ),
-				'action'     => substr( (string) $action, 0, 16 ),
-				'term'       => mb_substr( $hit->term, 0, 500 ),
-				'field'      => mb_substr( $hit->field, 0, 100 ),
-				'ref'        => substr( (string) $ref, 0, 64 ),
+				'created_at' => gmdate( 'Y-m-d H:i:s', $now ),
+				'last_at'    => gmdate( 'Y-m-d H:i:s', $now ),
+				'hits'       => 1,
+				'context'    => $context,
+				'action'     => $action,
+				'term'       => $term,
+				'field'      => $field,
+				'ref'        => $ref,
 				'excerpt'    => Settings::get( 'log_excerpts' ) ? mb_substr( $hit->excerpt, 0, 400 ) : null,
 			),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
+			array( '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
+		// phpcs:enable
+
+		return (int) $wpdb->insert_id;
 	}
 
 	/**
@@ -194,8 +249,8 @@ final class Log {
 		$since = gmdate( 'Y-m-d H:i:s', time() - (int) $days * DAY_IN_SECONDS );
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table.
-		$by_context = $wpdb->get_results( $wpdb->prepare( "SELECT context, action, COUNT(*) AS hits FROM {$wpdb->prefix}unified_blocklist_log WHERE created_at >= %s GROUP BY context, action", $since ), ARRAY_A );
-		$top_terms  = $wpdb->get_results( $wpdb->prepare( "SELECT term, COUNT(*) AS hits, MAX(created_at) AS last_seen FROM {$wpdb->prefix}unified_blocklist_log WHERE created_at >= %s GROUP BY term ORDER BY hits DESC LIMIT 10", $since ), ARRAY_A );
+		$by_context = $wpdb->get_results( $wpdb->prepare( "SELECT context, action, SUM(hits) AS hits FROM {$wpdb->prefix}unified_blocklist_log WHERE created_at >= %s GROUP BY context, action", $since ), ARRAY_A );
+		$top_terms  = $wpdb->get_results( $wpdb->prepare( "SELECT term, SUM(hits) AS hits, MAX(COALESCE(last_at, created_at)) AS last_seen FROM {$wpdb->prefix}unified_blocklist_log WHERE created_at >= %s GROUP BY term ORDER BY hits DESC LIMIT 10", $since ), ARRAY_A );
 		// phpcs:enable
 
 		$total = 0;
@@ -222,7 +277,7 @@ final class Log {
 
 		// SUBSTR works the same on MySQL, MariaDB and SQLite, unlike DATE().
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom table.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT SUBSTR(created_at, 1, 10) AS day, SUM(CASE WHEN action = 'logged' THEN 1 ELSE 0 END) AS logged, SUM(CASE WHEN action <> 'logged' THEN 1 ELSE 0 END) AS stopped FROM {$wpdb->prefix}unified_blocklist_log WHERE created_at >= %s GROUP BY SUBSTR(created_at, 1, 10)", $since ), ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT SUBSTR(created_at, 1, 10) AS day, SUM(CASE WHEN action = 'logged' THEN hits ELSE 0 END) AS logged, SUM(CASE WHEN action <> 'logged' THEN hits ELSE 0 END) AS stopped FROM {$wpdb->prefix}unified_blocklist_log WHERE created_at >= %s GROUP BY SUBSTR(created_at, 1, 10)", $since ), ARRAY_A );
 
 		$by_day = array();
 		foreach ( (array) $rows as $row ) {

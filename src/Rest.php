@@ -182,6 +182,64 @@ final class Rest {
 
 		register_rest_route(
 			self::NS,
+			'/preview',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( self::class, 'preview' ),
+				'permission_callback' => $admin,
+				'args'                => array(
+					'terms' => array(
+						'type'     => array( 'array', 'null' ),
+						'items'    => array(
+							'type'      => 'string',
+							'maxLength' => 500,
+						),
+						'maxItems' => 5000,
+						'default'  => null,
+					),
+					'limit' => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+						'maximum' => 1000,
+						'default' => Replay::PER_KIND,
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/rescues',
+			array(
+				'methods'             => WP_REST_Server::DELETABLE,
+				'callback'            => static function ( WP_REST_Request $request ) {
+					Rescues::forget( (string) $request['term'] );
+					return rest_ensure_response( array( 'state' => self::state() ) );
+				},
+				'permission_callback' => $admin,
+				'args'                => $term_arg,
+			)
+		);
+
+		register_rest_route(
+			self::NS,
+			'/discussion',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( self::class, 'move_discussion' ),
+					'permission_callback' => $admin,
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( self::class, 'restore_discussion' ),
+					'permission_callback' => $admin,
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
 			'/legacy',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -322,6 +380,8 @@ final class Rest {
 				'refLabel' => self::ref_label( (string) $row['ref'] ),
 				'refUrl'   => self::ref_url( (string) $row['ref'] ),
 				'excerpt'  => null === $row['excerpt'] ? null : (string) $row['excerpt'],
+				'hits'     => isset( $row['hits'] ) ? max( 1, (int) $row['hits'] ) : 1,
+				'lastTime' => empty( $row['last_at'] ) ? null : gmdate( 'c', (int) strtotime( $row['last_at'] . ' UTC' ) ),
 			);
 		}
 
@@ -344,6 +404,7 @@ final class Rest {
 		$exceptions[] = Settings::clean_term( (string) $request['term'] );
 		Settings::set( 'exceptions', $exceptions );
 		TermList::rebuild();
+		Rescues::forget( (string) $request['term'] );
 		return self::settings_and_state();
 	}
 
@@ -396,6 +457,51 @@ final class Rest {
 				'skipped' => $out ? array() : TermList::explain( $text ),
 			)
 		);
+	}
+
+	/**
+	 * What a list or a set of terms would have blocked among recent accepted messages.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public static function preview( WP_REST_Request $request ) {
+		$terms = $request['terms'];
+		return rest_ensure_response( Replay::run( is_array( $terms ) ? array_map( 'strval', $terms ) : null, (int) $request['limit'] ) );
+	}
+
+	/**
+	 * Moves the Discussion list into this plugin.
+	 *
+	 * @return WP_REST_Response|\WP_Error
+	 */
+	public static function move_discussion() {
+		$result = TermList::move_core();
+		if ( is_wp_error( $result ) ) {
+			$result->add_data( array( 'status' => 400 ) );
+			return $result;
+		}
+		return rest_ensure_response(
+			array(
+				'result'   => $result,
+				'settings' => Settings::all(),
+				'state'    => self::state(),
+			)
+		);
+	}
+
+	/**
+	 * Undoes the move.
+	 *
+	 * @return WP_REST_Response|\WP_Error
+	 */
+	public static function restore_discussion() {
+		$result = TermList::restore_core();
+		if ( is_wp_error( $result ) ) {
+			$result->add_data( array( 'status' => 400 ) );
+			return $result;
+		}
+		return self::settings_and_state();
 	}
 
 	/**
@@ -501,6 +607,9 @@ final class Rest {
 				'formidable'   => Integrations\Formidable::available(),
 			),
 			'coreLines'     => count( TermList::core_terms() ),
+			'coreIps'       => count( array_filter( TermList::core_terms(), array( TermList::class, 'is_ip' ) ) ),
+			'coreMoved'     => TermList::moved(),
+			'rescues'       => Rescues::all(),
 			'legacy'        => Legacy::detected() ? Legacy::report() : null,
 		);
 	}

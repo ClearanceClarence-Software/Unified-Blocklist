@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
+import type { ReactNode } from 'react';
 
 import { num } from '../lib/format';
 
@@ -24,6 +25,7 @@ export default function ListEditor( {
 	rows = 8,
 	disabled = false,
 	unit,
+	footer,
 }: {
 	id: string;
 	value: string[];
@@ -32,6 +34,8 @@ export default function ListEditor( {
 	rows?: number;
 	disabled?: boolean;
 	unit: ( n: number ) => string;
+	// Rendered under the editor with the lines that are new since the last save.
+	footer?: ( added: string[] ) => ReactNode;
 } ) {
 	const [ text, setText ] = useState( toText( value ) );
 	const [ saving, setSaving ] = useState( false );
@@ -49,6 +53,10 @@ export default function ListEditor( {
 
 	const list = useMemo( () => toList( text ), [ text ] );
 	const dirty = toText( list ) !== saved;
+	const added = useMemo( () => {
+		const before = new Set( value.map( ( v ) => v.toLowerCase() ) );
+		return list.filter( ( l ) => ! before.has( l.toLowerCase() ) );
+	}, [ list, value ] );
 
 	const save = async () => {
 		setSaving( true );
@@ -107,6 +115,9 @@ export default function ListEditor( {
 					{ __( 'Save', 'unified-blocklist' ) }
 				</button>
 			</div>
+			{ footer && added.length > 0 && (
+				<div className="ub-list-editor-foot">{ footer( added ) }</div>
+			) }
 		</div>
 	);
 }

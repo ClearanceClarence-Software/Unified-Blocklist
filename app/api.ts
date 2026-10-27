@@ -3,6 +3,7 @@ import apiFetch from '@wordpress/api-fetch';
 import type {
 	LegacyReport,
 	LogRow,
+	ReplayResult,
 	Settings,
 	State,
 	SyncResult,
@@ -92,6 +93,37 @@ export const api = {
 			method: 'POST',
 			data: { text },
 			signal,
+		} ),
+
+	// Without terms, the active list is replayed.
+	preview: ( terms?: string[] ) =>
+		apiFetch< ReplayResult >( {
+			path: `${ NS }/preview`,
+			method: 'POST',
+			data: terms ? { terms } : {},
+		} ),
+
+	dismissRescue: ( term: string ) =>
+		apiFetch< { state: State } >( {
+			path: `${ NS }/rescues`,
+			method: 'DELETE',
+			data: { term },
+		} ),
+
+	moveDiscussion: () =>
+		apiFetch<
+			SettingsResponse & {
+				result: { moved: number; added: number; kept: number };
+			}
+		>( {
+			path: `${ NS }/discussion`,
+			method: 'POST',
+		} ),
+
+	restoreDiscussion: () =>
+		apiFetch< SettingsResponse >( {
+			path: `${ NS }/discussion`,
+			method: 'DELETE',
 		} ),
 
 	legacy: ( steps: string[] ) =>

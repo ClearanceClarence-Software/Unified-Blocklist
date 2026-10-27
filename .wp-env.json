@@ -1,0 +1,17 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/wp-env.json",
+	"core": null,
+	"phpVersion": "8.2",
+	"plugins": [
+		".",
+		"https://downloads.wordpress.org/plugin/contact-form-7.zip",
+		"https://downloads.wordpress.org/plugin/flamingo.zip",
+		"https://downloads.wordpress.org/plugin/wpforms-lite.zip",
+		"https://downloads.wordpress.org/plugin/formidable.zip",
+		"./tests/e2e/fixtures/ub-test-setup"
+	],
+	"config": {
+		"WP_DEBUG_DISPLAY": false,
+		"SCRIPT_DEBUG": false
+	}
+}

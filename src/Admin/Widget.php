@@ -107,6 +107,19 @@ final class Widget {
 		if ( null !== $state['legacy'] ) {
 			$issues[] = array( 'warn', __( 'Data from Dynamic Blacklist Updater is still in your Discussion settings.', 'unified-blocklist' ), App::url( 'overview' ) );
 		}
+		if ( $state['rescues'] ) {
+			$terms    = array_slice( wp_list_pluck( $state['rescues'], 'term' ), 0, 3 );
+			$issues[] = array(
+				'warn',
+				sprintf(
+					/* translators: 1: number of terms, 2: the first few terms */
+					_n( 'Moderators rescued messages stopped by %1$d term (%2$s). Allow it?', 'Moderators rescued messages stopped by %1$d terms (%2$s). Allow them?', count( $state['rescues'] ), 'unified-blocklist' ),
+					count( $state['rescues'] ),
+					'"' . implode( '", "', $terms ) . '"'
+				),
+				App::url( 'log' ),
+			);
+		}
 		?>
 		<div class="ubw">
 			<div class="ubw-head">
